@@ -1,0 +1,14 @@
+# Archivos temporales de Office / Word
+~$*.*
+
+# Archivos del sistema
+Thumbs.db
+Desktop.ini
+
+# Node / build (cuando existan)
+node_modules/
+dist/
+build/
+
+# Logs
+*.log
