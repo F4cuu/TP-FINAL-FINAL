@@ -32,15 +32,28 @@
 - Cantidad de enemigos: **8 → 30**.
 - Fin de oleada por **tiempo**, no por matanzas.
 
+### Composición de enemigos por oleada
+- Oleadas 1 y 2: solo Simples.
+- Oleada 3: 1/10 Cazador, resto Simples + **jefe**.
+- Oleada 4: 3/10 Cazadores, resto Simples.
+- Oleada 5: **únicamente Cazadores**.
+- Oleada 6: 4/10 Simples, 4/10 Cazadores, 2/10 Compuestos + **jefe**.
+- Oleada 7: 3/10 Simples, 3/10 Cazadores, 4/10 Compuestos.
+- Oleada 8: 3/10 Cazadores, 7/10 Compuestos (sin Simples).
+- Oleada 9: **un único jefe** + 7/10 Simples + 3/10 Compuestos.
+- Modo infinito: crece indefinidamente la cantidad de enemigos simultáneos; **no** escala HP/daño.
+
 ### Jugador
 - **100 HP inicial** (HP fijo, sin cura).
 - Velocidad de movimiento base + mejora (Flagelo acelerado).
 - Arena **grande y limitada**, cámara que sigue al jugador.
-- Movimiento con flechas del teclado.
+- Movimiento con **flechas o WASD**. Por ahora **solo PC**; móvil pendiente.
 
 ### Armas y combate
+- El jugador arranca con **Escupida de toxina nivel 1**.
 - Hasta **4 armas equipables**, autodisparo al **enemigo más cercano**.
 - Daño base por proyectil: **10**.
+- **Progresión de armas**: las armas se compran en la tienda. Cada arma sube de nivel por separado. Al obtener otra copia de un arma ya equipada, el jugador elige: (a) equiparla en un espacio libre, o (b) **acoplarla** a la existente para subirla de nivel (más daño). Costos a definir en el balance.
 - Armas (temática bacteriana):
   1. **Escupida de toxina** (básica): proyectil recto, daño 10, cada 0,6s.
   2. **Abanico de exotoxina**: 5 proyectiles en abanico, daño 5 c/u, cada 2s.
@@ -48,19 +61,28 @@
   4. **Liberación de esporas**: explosión en el enemigo más lejano, daño 25, recarga 4s.
   5. **Plásmido veloz**: proyectil lento que atraviesa, daño 8/golpe, ráfaga 0,15s durante 1s, recarga 2s.
 
+### Combate (reglas)
+- Todo el daño es **por contacto**. **Sin ventanas de invulnerabilidad** (i-frames).
+- Los enemigos **se empujan entre sí** pero mantienen el rumbo hacia el jugador.
+- Los proyectiles **desaparecen al impactar** (salvo el Plásmido veloz, que atraviesa).
+- Velocidades relativas: Jugador media / Simples media / Cazadores alta / Compuestos baja / Jefes muy baja.
+
 ### Enemigos
 | Tipo | HP | Daño | Velocidad | Notas |
 |------|-----|------|-----------|-------|
-| Simple | 20 | 10 | normal | los más comunes |
-| Cazador | 10 | 6 | alta | desde oleada 2, más recurrentes desde la 3 |
-| Compuesto | 60 | 15 | lenta | mucha vida |
-| Jefe | 500 | 60 | baja | oleadas 3, 6 y 9 |
+| Simple | 20 | 10 | media | burbuja, los más comunes |
+| Cazador | 10 | 6 | alta | burbuja con burbujas adentro; desde oleada 3 |
+| Compuesto | 60 | 15 | baja | rectángulo/paño; mucha vida |
+| Jefe | 500 | 60 | muy baja | jabón enorme; oleadas 3, 6 y 9 |
 
 - Aparecen de manera aleatoria en la arena y persiguen al jugador.
+- **Jefe**: único tipo. Cada **10s** usa su habilidad: se queda quieto y luego **embiste** hacia la última posición registrada del jugador antes del ataque.
 
 ### Tienda y mejoras
-- **1 minuto de tienda entre oleadas**; puntos obtenidos por eliminar enemigos.
+- **1 minuto de tienda entre oleadas**; se paga con **monedas** de eliminar enemigos.
 - Se elige **1 mejora entre 3 opciones aleatorias**; acumulan niveles.
+- **Los puntos no gastados se conservan** entre oleadas; los precios suben levemente con la dificultad.
+- Monedas por enemigo (aleatorio): Simples 3-10 / Cazadores 7-15 / Compuestos 15-30 / Jefes 50-100.
 - Mejoras:
   1. **Cápside resistente**: +25 HP máx (no cura).
   2. **Flagelo acelerado**: +10% velocidad de movimiento/nivel.
@@ -69,23 +91,46 @@
   5. **Biofilm denso**: +15% tamaño de proyectiles y AOE/nivel.
   6. **Perforación de membrana**: proyectiles atraviesan 1 enemigo adicional/nivel.
 
+### Flujo de pantallas
+- Pantalla inicial (cualquier tecla) → Intro narrativa → Menú principal (Jugar / Opciones / Salir).
+- Durante el juego, **pausa** con: Continuar / Opciones / Reiniciar / Salir.
+- Al vencer las 9 oleadas: terminar o modo infinito.
+
 ### HUD / interfaz
-- Contador de tiempo de oleada (arriba al centro).
-- Puntos por eliminar enemigos (arriba a la derecha).
-- Barra de vida del jugador (100 HP).
+- Barra de vida **con número**.
+- **Indicador de oleada** actual.
+- **Iconos de armas equipadas** en una esquina, en transparente.
+- Contador de tiempo de oleada; monedas/puntaje.
+
+### Arte y feedback visual
+- Estilo simple con **figuras geométricas de colores**.
+- Jugador: **cilindro verde**. Simples: **burbuja**. Cazadores: **burbuja con muchas burbujas dentro**. Compuestos: **rectángulo (paño)**. Jefe: **jabón enorme**. Armas: varían.
+- Parpadeo al recibir daño; **efecto rojo en bordes** con poca vida.
+- Entidades "respiran" (pulso) y dejan **partículas detrás** al moverse.
+- **Números de daño flotantes** y partículas de impacto; al morir, el enemigo **gira sobre su eje y desaparece**.
 
 ### Audio
 - Efectos WebAudio por evento: disparo, impacto, daño recibido, aparición de jefe, compra/mejora, fin de oleada, game over.
 
+### Persistencia (localStorage)
+- Récords: **puntaje máximo, oleada máxima, tiempo sobrevivido, enemigos eliminados**.
+
 ## 4. Cambios aplicados al GDD PROPUESTA.docx
 
-1. Sección 3: se agregó motor Phaser 4 y audio WebAudio.
+1. Sección 3: motor Phaser 4, audio WebAudio, arquitectura web con datos de balance separados.
 2. Sección 5: 7 → 9 oleadas; jefes en 3/6/9; opción de terminar/modo infinito; escala de oleadas (20→50s, 8→30).
 3. Sección 6: oleadas por duración fija; puntos canjeables en tienda de 1 minuto entre oleadas.
-4. Sección 7: armas con autodisparo al enemigo más cercano.
-5. Nueva sección **8. Armas y combate**: hasta 4 armas, daño base 10, lista de 5 armas.
-6. Nueva sección **9. Sistema de mejoras y tienda**: tienda 1 minuto, elegir 1 de 3, lista de 6 mejoras.
-7. Sección 10 (antes 9): stats de enemigos y jugador (100 HP, sin cura).
+4. Sección 7: movimiento con flechas o **WASD**, solo PC; armas con autodisparo.
+5. Sección 8 (nueva): armas, arranque con toxina niv.1, progresión acoplar/equipar, daño base 10, lista de 5 armas.
+6. Sección 9 (nueva): tienda 1 minuto, elegir 1 de 3, monedas por enemigo, puntos persistentes, 6 mejoras.
+7. Sección 10 (antes 9): stats de enemigos y jugador (100 HP, sin cura); cazadores desde la 3ra.
+8. Sección 11 (nueva): composición de enemigos por oleada + escalado del modo infinito.
+9. Sección 12 (nueva): jefe (único) y su habilidad de embestida cada 10s.
+10. Sección 13 (nueva): flujo de pantallas y pausa.
+11. Sección 14 (nueva): HUD (barra de vida con número, indicador de oleada, iconos de armas).
+12. Sección 15 (nueva): arte y feedback visual (formas, efectos, partículas, daño flotante).
+13. Sección 16 (nueva): récords en localStorage.
+14. Sección 17 (nueva): reglas de combate (contacto, sin i-frames, empuje, proyectiles).
 
 **Pendiente estético:** la sección 4 del GDD no existe (salta del 3 al 5), heredado del original. Consultar con el usuario si crearla.
 
@@ -95,8 +140,13 @@
   - `GDD PROPUESTA.docx` (editado).
   - `AGENTS.md` (creado).
   - `MEMORIA DE PROYECTO.md` (este archivo).
+  - `.gitignore` (creado).
 - **Código:** aun no existe. No se ha creado el esqueleto del juego en Phaser 4.
-- **Git:** NO es repositorio. No hay remoto. Consultar al usuario antes de `git init` o configurar remoto (según AGENTS.md, sección 8).
+- **Git:** repositorio inicializado en rama `main`.
+  - Remoto: `https://github.com/F4cuu/TP-FINAL-FINAL.git` (origin).
+  - Identidad local: `F4cuu` / `f4cundoibanez@gmail.com`.
+  - Primer commit: `2a8c8ab` — `docs: agregar GDD, AGENTS.md, memoria de proyecto y gitignore`.
+- **Decisión sobre lenguaje/estructura:** queda a criterio del agente (TypeScript o JS puro; datos de balance separados de la lógica).
 
 ## 6. Convenciones técnicas y de trabajo
 
