@@ -12,6 +12,7 @@ class Enemy {
     this.radius = def.radius;
     this.contactTimer = 0;
     this.dead = false;
+    this.incomingDamage = 0;
     this.isBoss = def.key === 'boss';
 
     this.breath = Math.random() * Math.PI * 2;

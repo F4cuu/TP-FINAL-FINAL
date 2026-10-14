@@ -29,36 +29,81 @@ class Weapon {
     }
 
     if (this.timer <= 0) {
-      const target = game.getNearestEnemy(player.x, player.y);
-      if (target) {
-        this.fire(target, player, game);
-      }
+      this.tryFire(player, game);
     }
   }
 
-  fire(target, player, game) {
-    const cooldown = this.def.cooldown / player.fireRateMul;
-    this.timer = cooldown;
+  tryFire(player, game) {
+    const damage = this.damage * player.damageMul;
+    const type = this.def.type;
 
-    if (this.def.type === 'projectile') {
-      this.fireSpread(target, player, game);
-    } else if (this.def.type === 'burst') {
+    if (type === 'aoe') {
+      if (!game.getNearestEnemy(player.x, player.y, this.def.range)) {
+        return;
+      }
+      this.timer = this.def.cooldown / player.fireRateMul;
+      game.applyAoe(player.x, player.y, this.def.radius * player.areaMul, damage, this.def.color);
+      game.audio.shoot();
+      return;
+    }
+
+    if (type === 'aoe_target') {
+      const target = game.getNearestEnemy(player.x, player.y, this.def.range, true);
+      if (!target) {
+        return;
+      }
+      this.timer = this.def.cooldown / player.fireRateMul;
+      game.applyAoe(target.x, target.y, this.def.radius * player.areaMul, damage, this.def.color);
+      game.audio.shoot();
+      return;
+    }
+
+    if (type === 'burst') {
+      if (!game.getNearestEnemy(player.x, player.y, this.def.range, true)) {
+        return;
+      }
+      this.timer = this.def.cooldown / player.fireRateMul;
       this.burstLeft = this.def.burstCount;
       this.burstTimer = 0;
-    } else if (this.def.type === 'aoe') {
-      const radius = this.def.radius * player.areaMul;
-      game.applyAoe(player.x, player.y, radius, this.damage * player.damageMul, this.def.color);
-    } else if (this.def.type === 'aoe_target') {
-      const radius = this.def.radius * player.areaMul;
-      game.applyAoe(target.x, target.y, radius, this.damage * player.damageMul, this.def.color);
+      return;
+    }
+
+    const target = game.acquireTarget(player.x, player.y, this.def.range, damage);
+    if (!target) {
+      return;
+    }
+    this.timer = this.def.cooldown / player.fireRateMul;
+
+    if (type === 'explosive') {
+      this.fireTorpedo(target, damage, player, game);
+    } else {
+      this.fireSpread(target, damage, player, game);
     }
   }
 
-  fireSpread(target, player, game) {
+  fireTorpedo(target, damage, player, game) {
+    const angle = Math.atan2(target.y - player.y, target.x - player.x);
+    const vx = Math.cos(angle) * this.def.projectileSpeed;
+    const vy = Math.sin(angle) * this.def.projectileSpeed;
+    game.spawnProjectile(player.x, player.y, vx, vy, {
+      damage: damage,
+      radius: this.def.radius * player.areaMul,
+      pierce: 0,
+      color: this.def.color,
+      explosive: true,
+      explosionRadius: this.def.explosionRadius * player.areaMul,
+      explosionColor: 0xf0932b,
+      life: this.def.range / this.def.projectileSpeed + 0.1,
+      targetId: target.id,
+      reservedDamage: damage
+    });
+    game.audio.shoot();
+  }
+
+  fireSpread(target, damage, player, game) {
     const count = this.def.count;
     const baseAngle = Math.atan2(target.y - player.y, target.x - player.x);
     const spread = this.def.spread;
-    const damage = this.damage * player.damageMul;
     const radius = this.def.radius * player.areaMul;
 
     for (let i = 0; i < count; i++) {
@@ -72,14 +117,17 @@ class Weapon {
         damage: damage,
         radius: radius,
         pierce: this.pierce,
-        color: this.def.color
+        color: this.def.color,
+        targetId: i === 0 ? target.id : 0,
+        reservedDamage: i === 0 ? damage : 0
       });
     }
     game.audio.shoot();
   }
 
   fireSingle(player, game) {
-    const target = game.getNearestEnemy(player.x, player.y);
+    const damage = this.damage * player.damageMul;
+    const target = game.acquireTarget(player.x, player.y, this.def.range, damage);
     if (!target) {
       this.burstLeft = 0;
       return;
@@ -88,10 +136,12 @@ class Weapon {
     const vx = Math.cos(angle) * this.def.projectileSpeed;
     const vy = Math.sin(angle) * this.def.projectileSpeed;
     game.spawnProjectile(player.x, player.y, vx, vy, {
-      damage: this.damage * player.damageMul,
+      damage: damage,
       radius: this.def.radius * player.areaMul,
       pierce: this.pierce,
-      color: this.def.color
+      color: this.def.color,
+      targetId: target.id,
+      reservedDamage: damage
     });
     game.audio.shoot();
   }

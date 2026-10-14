@@ -8,10 +8,16 @@ const TOTAL_WAVES = 9;
 
 const PLAYER_DEF = {
   hp: 100,
-  speed: 210,
+  speed: 300,
   radius: 18,
   maxWeapons: 4
 };
+
+const SPAWN_TELEGRAPH = 0.55;
+const SPAWN_NEAR_MIN = 170;
+const SPAWN_NEAR_MAX = 380;
+const SPAWN_BOSS_MIN = 260;
+const SPAWN_BOSS_MAX = 440;
 
 const COLORS = {
   bg: 0x0b1026,

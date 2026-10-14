@@ -5,7 +5,7 @@ const ENEMY_DEFS = {
     texture: 'enemy_simple',
     hp: 20,
     damage: 10,
-    speed: 95,
+    speed: 150,
     radius: 16,
     color: 0x4bcffa,
     coins: [3, 10]
@@ -16,7 +16,7 @@ const ENEMY_DEFS = {
     texture: 'enemy_hunter',
     hp: 10,
     damage: 6,
-    speed: 175,
+    speed: 260,
     radius: 15,
     color: 0xf6e58d,
     coins: [7, 15]
@@ -27,7 +27,7 @@ const ENEMY_DEFS = {
     texture: 'enemy_compound',
     hp: 60,
     damage: 15,
-    speed: 62,
+    speed: 100,
     radius: 22,
     color: 0x7f8fa6,
     coins: [15, 30]
@@ -38,7 +38,7 @@ const ENEMY_DEFS = {
     texture: 'enemy_boss',
     hp: 500,
     damage: 60,
-    speed: 34,
+    speed: 60,
     radius: 60,
     color: 0xe1b12c,
     coins: [50, 100]

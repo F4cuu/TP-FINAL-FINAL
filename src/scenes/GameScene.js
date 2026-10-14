@@ -19,6 +19,7 @@ class GameScene extends Phaser.Scene {
 
     this.enemies = [];
     this.projectiles = [];
+    this.pendingSpawns = [];
     this.uiBlock = null;
 
     this.cameras.main.setBounds(0, 0, ARENA_WIDTH, ARENA_HEIGHT);
@@ -88,6 +89,7 @@ class GameScene extends Phaser.Scene {
 
     this.updateEnemies(dt);
     this.updateProjectiles(dt);
+    this.updateSpawnMarkers(dt);
     this.updateWave(dt);
     this.updateHUD();
 
@@ -106,6 +108,10 @@ class GameScene extends Phaser.Scene {
   }
 
   updateEnemies(dt) {
+    this.enemies = this.enemies.filter(function (e) {
+      return !e.dead;
+    });
+
     for (let i = this.enemies.length - 1; i >= 0; i--) {
       const enemy = this.enemies[i];
       if (enemy.dead) {
@@ -130,12 +136,23 @@ class GameScene extends Phaser.Scene {
       const p = this.projectiles[i];
       p.update(dt);
       if (p.dead) {
+        if (p.explosive && !p.exploded) {
+          this.explodeProjectile(p, p.sprite.x, p.sprite.y);
+        }
+        this.releaseReservation(p);
         p.destroy();
         this.projectiles.splice(i, 1);
         continue;
       }
       this.checkProjectileHits(p);
     }
+  }
+
+  explodeProjectile(projectile, x, y) {
+    projectile.exploded = true;
+    this.audio.hit();
+    this.cameras.main.shake(160, 0.008);
+    this.applyAoe(x, y, projectile.explosionRadius, projectile.damage, projectile.explosionColor);
   }
 
   checkProjectileHits(projectile) {
@@ -150,6 +167,11 @@ class GameScene extends Phaser.Scene {
       const dx = enemy.x - projectile.sprite.x;
       const dy = enemy.y - projectile.sprite.y;
       if (Math.hypot(dx, dy) < enemy.radius + projectile.radius) {
+        if (projectile.explosive) {
+          this.explodeProjectile(projectile, enemy.x, enemy.y);
+          projectile.dead = true;
+          return;
+        }
         projectile.hitIds.push(enemy.id);
         this.audio.hit();
         const killed = enemy.takeDamage(projectile.damage);
@@ -185,11 +207,6 @@ class GameScene extends Phaser.Scene {
       duration: 300,
       onComplete: () => sprite.destroy()
     });
-
-    const idx = this.enemies.indexOf(enemy);
-    if (idx !== -1) {
-      this.enemies.splice(idx, 1);
-    }
   }
 
   updateWave(dt) {
@@ -200,7 +217,7 @@ class GameScene extends Phaser.Scene {
       if (this.spawnTimer <= 0) {
         this.spawnTimer = this.spawnInterval;
         const type = this.spawnQueue.shift();
-        this.enemies.push(EnemyFactory.spawnAtEdge(this, type, this.player));
+        this.queueSpawn(type);
       }
     }
 
@@ -209,16 +226,63 @@ class GameScene extends Phaser.Scene {
     }
   }
 
+  queueSpawn(type) {
+    const isBoss = type === 'boss';
+    const pos = EnemyFactory.randomNearPlayer(
+      type,
+      this.player,
+      isBoss ? SPAWN_BOSS_MIN : SPAWN_NEAR_MIN,
+      isBoss ? SPAWN_BOSS_MAX : SPAWN_NEAR_MAX
+    );
+    const def = ENEMY_DEFS[type] || ENEMY_DEFS.simple;
+    const marker = this.add
+      .image(pos.x, pos.y, 'spawn_cross')
+      .setTint(0xeb3b5a)
+      .setDepth(DEPTH.trail + 1);
+    const baseScale = (def.radius / 16) * (isBoss ? 1.6 : 1);
+    marker.setScale(baseScale);
+    this.pendingSpawns.push({
+      x: pos.x,
+      y: pos.y,
+      type: type,
+      timer: isBoss ? SPAWN_TELEGRAPH + 0.6 : SPAWN_TELEGRAPH,
+      marker: marker,
+      baseScale: baseScale
+    });
+  }
+
+  updateSpawnMarkers(dt) {
+    for (let i = this.pendingSpawns.length - 1; i >= 0; i--) {
+      const ps = this.pendingSpawns[i];
+      ps.timer -= dt;
+      const blink = 0.25 + 0.65 * Math.abs(Math.sin(ps.timer * 16));
+      ps.marker.setAlpha(blink);
+      ps.marker.setScale(ps.baseScale * (1 + Math.sin(ps.timer * 22) * 0.12));
+
+      if (ps.timer <= 0) {
+        ps.marker.destroy();
+        this.enemies.push(EnemyFactory.create(this, ps.type, ps.x, ps.y));
+        this.pendingSpawns.splice(i, 1);
+      }
+    }
+  }
+
+  clearPendingSpawns() {
+    this.pendingSpawns.forEach(function (ps) {
+      ps.marker.destroy();
+    });
+    this.pendingSpawns = [];
+  }
+
   startWave(wave) {
     this.wave = wave;
     this.waveTimeLeft = Math.min(20 + 4 * (wave - 1), 50);
     this.spawnQueue = buildSpawnQueue(wave);
-    this.spawnInterval = this.waveTimeLeft / Math.max(1, this.spawnQueue.length);
-    this.spawnTimer = 0.5;
+    this.spawnInterval = this.waveTimeLeft / Math.max(1, this.spawnQueue.length * 2);
+    this.spawnTimer = 0.2;
 
     if (isBossWave(wave)) {
-      const boss = EnemyFactory.spawnAtEdge(this, 'boss', this.player);
-      this.enemies.push(boss);
+      this.queueSpawn('boss');
       this.audio.boss();
       this.cameras.main.shake(400, 0.01);
     }
@@ -226,6 +290,7 @@ class GameScene extends Phaser.Scene {
 
   endWave() {
     this.audio.waveEnd();
+    this.clearPendingSpawns();
 
     if (!this.infinite && this.wave >= TOTAL_WAVES) {
       this.showVictory();
@@ -303,10 +368,15 @@ class GameScene extends Phaser.Scene {
 
   openShop() {
     this.phase = 'shop';
-    this.shopOptions = this.buildShopOptions();
+    this.shopRerolls = 0;
     this.shopIndex = 0;
-    this.buildOverlay('TIENDA', 'Elegi 1 de 3  |  Monedas: ' + this.coins);
-    this.renderShop();
+    this.shopOptions = this.buildShopOptions();
+    this.buildOverlay('TIENDA', 'Monedas: ' + this.coins);
+    this.shopCoins = this.overlayTitle;
+    this.buildCards();
+    this.buildShopButtons();
+    this.buildSellSection();
+    this.refreshShop();
   }
 
   buildShopOptions() {
@@ -318,7 +388,8 @@ class GameScene extends Phaser.Scene {
         name: up.name,
         desc: up.desc,
         cost: up.baseCost,
-        apply: up.apply
+        apply: up.apply,
+        sold: false
       });
     });
 
@@ -334,7 +405,8 @@ class GameScene extends Phaser.Scene {
         name: def.name,
         desc: owned ? 'Acoplar (subir nivel)' : 'Nueva arma',
         cost: WEAPON_BASE_COST,
-        owned: owned
+        owned: owned,
+        sold: false
       });
     });
 
@@ -342,26 +414,25 @@ class GameScene extends Phaser.Scene {
     return pool.slice(0, 3);
   }
 
-  renderShop() {
-    this.clearCards();
+  buildCards() {
+    this.destroyCards();
     this.shopCards = [];
-
     const startX = GAME_WIDTH / 2 - 340;
+
     this.shopOptions.forEach((opt, i) => {
       const x = startX + i * 340;
-      const y = 360;
+      const y = 330;
 
       const card = this.add
-        .rectangle(x, y, 300, 240, 0x1d2a54, 0.95)
+        .rectangle(x, y, 300, 230, 0x1d2a54, 0.95)
         .setStrokeStyle(3, 0x3a5bd0, 1)
         .setScrollFactor(0)
         .setDepth(DEPTH.overlay + 1)
         .setInteractive({ useHandCursor: true });
 
-      const affordable = this.coins >= opt.cost;
       card.on('pointerover', () => {
         this.shopIndex = i;
-        this.refreshShopCards();
+        this.refreshShop();
       });
       card.on('pointerdown', () => this.chooseShopOption(i));
 
@@ -393,20 +464,36 @@ class GameScene extends Phaser.Scene {
         .text(x, y + 80, opt.cost + ' monedas', {
           fontFamily: 'Arial, sans-serif',
           fontSize: '20px',
-          color: affordable ? '#9be15d' : '#eb3b5a'
+          color: '#9be15d'
         })
         .setOrigin(0.5)
         .setScrollFactor(0)
         .setDepth(DEPTH.overlay + 2);
 
-      this.shopCards.push({ card, title, desc, cost, affordable });
+      this.shopCards.push({ card, title, desc, cost });
     });
+  }
 
-    this.skipBtn = this.add
-      .text(GAME_WIDTH / 2, 560, '[ Siguiente oleada ]', {
+  buildShopButtons() {
+    this.destroyShopButtons();
+
+    this.rerollBtn = this.add
+      .text(440, 490, '', {
         fontFamily: 'Arial, sans-serif',
         fontSize: '22px',
-        color: COLORS.textDim
+        color: '#9be15d'
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(DEPTH.overlay + 2)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerdown', () => this.rerollShop());
+
+    this.continueBtn = this.add
+      .text(840, 490, '[ Enter ] Continuar', {
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '22px',
+        color: '#9be15d'
       })
       .setOrigin(0.5)
       .setScrollFactor(0)
@@ -414,27 +501,136 @@ class GameScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true })
       .on('pointerdown', () => this.closeShop());
 
-    this.refreshShopCards();
+    this.shopHint = this.add
+      .text(GAME_WIDTH / 2, 688, '1 / 2 / 3 comprar     R reroll     Enter continuar', {
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '16px',
+        color: COLORS.textDim
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(DEPTH.overlay + 2);
+
+    this.shopButtons = [this.rerollBtn, this.continueBtn, this.shopHint];
   }
 
-  refreshShopCards() {
+  buildSellSection() {
+    this.destroySellSection();
+
+    this.sellTitle = this.add
+      .text(24, 575, 'Vender armas (clic):', {
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '18px',
+        color: COLORS.text
+      })
+      .setOrigin(0, 0.5)
+      .setScrollFactor(0)
+      .setDepth(DEPTH.overlay + 2);
+
+    this.sellChips = [];
+
+    if (this.player.weapons.length <= 1) {
+      this.sellChips.push(
+        this.add
+          .text(230, 575, '(no podes vender tu unica arma)', {
+            fontFamily: 'Arial, sans-serif',
+            fontSize: '16px',
+            color: COLORS.textDim
+          })
+          .setOrigin(0, 0.5)
+          .setScrollFactor(0)
+          .setDepth(DEPTH.overlay + 2)
+      );
+      return;
+    }
+
+    this.player.weapons.forEach((w, i) => {
+      const chipX = 24 + i * 300;
+      const chip = this.add
+        .text(
+          chipX,
+          615,
+          w.def.name + ' Nv.' + w.level + '  (+' + SELL_WEAPON_VALUE + ')',
+          {
+            fontFamily: 'Arial, sans-serif',
+            fontSize: '16px',
+            color: '#ffd166'
+          }
+        )
+        .setOrigin(0, 0.5)
+        .setScrollFactor(0)
+        .setDepth(DEPTH.overlay + 3)
+        .setInteractive({ useHandCursor: true })
+        .on('pointerover', () => chip.setColor('#ff9f43'))
+        .on('pointerout', () => chip.setColor('#ffd166'))
+        .on('pointerdown', () => this.sellWeapon(w.def.key));
+      this.sellChips.push(chip);
+    });
+  }
+
+  sellWeapon(weaponKey) {
+    if (this.player.weapons.length <= 1) {
+      this.audio.beep(180, 0.1, 'sawtooth', 0.05);
+      return;
+    }
+    const idx = this.player.weapons.findIndex(function (w) {
+      return w.def.key === weaponKey;
+    });
+    if (idx === -1) {
+      return;
+    }
+    this.player.weapons.splice(idx, 1);
+    this.coins += SELL_WEAPON_VALUE;
+    this.audio.buy();
+    this.buildSellSection();
+    this.refreshShop();
+  }
+
+  refreshShop() {
+    const rerollCost = REROLL_BASE_COST + REROLL_COST_STEP * this.shopRerolls;
+    if (this.rerollBtn) {
+      this.rerollBtn.setText('[ R ] Reroll (' + rerollCost + ')');
+      this.rerollBtn.setColor(this.coins >= rerollCost ? '#9be15d' : '#eb3b5a');
+    }
+    if (this.shopCoins) {
+      this.shopCoins.setText('Monedas: ' + this.coins);
+    }
+
+    if (!this.shopCards) {
+      return;
+    }
+
     this.shopCards.forEach((c, i) => {
-      const sel = i === this.shopIndex;
-      c.card.setStrokeStyle(3, sel ? 0x9be15d : 0x3a5bd0, 1);
+      const opt = this.shopOptions[i];
+      const selected = i === this.shopIndex;
+      const affordable = this.coins >= opt.cost && !opt.sold;
+
+      c.card.setStrokeStyle(3, opt.sold ? 0x555f7a : selected ? 0x9be15d : 0x3a5bd0, 1);
+      c.card.setFillStyle(opt.sold ? 0x161d33 : 0x1d2a54, 0.95);
+      c.title.setColor(opt.sold ? '#6b7690' : '#e8f0ff');
+      c.desc.setText(opt.sold ? 'Comprado' : opt.desc);
+      c.desc.setColor(opt.sold ? '#6b7690' : COLORS.textDim);
+      c.cost.setText(opt.sold ? '--' : opt.cost + ' monedas');
+      c.cost.setColor(opt.sold ? '#6b7690' : affordable ? '#9be15d' : '#eb3b5a');
     });
   }
 
   handleShopKey(event) {
+    if (this.choiceButtons) {
+      return;
+    }
     if (event.key === '1' || event.key === '2' || event.key === '3') {
       this.chooseShopOption(parseInt(event.key, 10) - 1);
-    } else if (event.key === 'Enter') {
+    } else if (event.key === 'r' || event.key === 'R') {
+      this.rerollShop();
+    } else if (event.key === 'Enter' || event.key === 'c' || event.key === 'C') {
       this.closeShop();
     }
   }
 
   chooseShopOption(index) {
     const opt = this.shopOptions[index];
-    if (!opt) {
+    if (!opt || opt.sold) {
       return;
     }
     if (this.coins < opt.cost) {
@@ -443,39 +639,74 @@ class GameScene extends Phaser.Scene {
     }
 
     if (opt.kind === 'upgrade') {
-      this.coins -= opt.cost;
-      opt.apply(this.player);
-      this.audio.buy();
-      this.closeShop();
+      this.purchaseUpgrade(opt);
       return;
     }
 
     const owned = this.player.hasWeapon(opt.weaponKey);
     const freeSlot = this.player.weapons.length < PLAYER_DEF.maxWeapons;
     if (owned && freeSlot) {
-      this.showWeaponChoice(opt);
+      this.showWeaponChoice(opt, index);
     } else {
-      this.applyWeaponChoice(opt, owned ? 'annex' : 'equip');
+      this.purchaseWeapon(opt, owned ? 'annex' : 'equip');
     }
   }
 
-  showWeaponChoice(opt) {
+  purchaseUpgrade(opt) {
+    this.coins -= opt.cost;
+    opt.apply(this.player);
+    opt.sold = true;
+    this.audio.buy();
+    this.refreshShop();
+  }
+
+  purchaseWeapon(opt, mode) {
+    this.coins -= opt.cost;
+    if (mode === 'annex') {
+      const weapon = this.player.getWeapon(opt.weaponKey);
+      if (weapon) {
+        weapon.level += 1;
+      }
+    } else {
+      this.player.weapons.push(new Weapon(WEAPON_DEFS[opt.weaponKey]));
+    }
+    opt.sold = true;
+    this.audio.buy();
+    this.buildSellSection();
+    this.refreshShop();
+  }
+
+  rerollShop() {
+    const cost = REROLL_BASE_COST + REROLL_COST_STEP * this.shopRerolls;
+    if (this.coins < cost) {
+      this.audio.beep(180, 0.1, 'sawtooth', 0.05);
+      return;
+    }
+    this.coins -= cost;
+    this.shopRerolls += 1;
+    this.shopIndex = 0;
+    this.shopOptions = this.buildShopOptions();
+    this.buildCards();
+    this.refreshShop();
+    this.audio.buy();
+  }
+
+  showWeaponChoice(opt, index) {
     this.weaponChoice = opt;
-    this.weaponChoiceIndex = 0;
+    this.weaponChoiceIndex = index;
     const choices = ['Equipar en espacio libre', 'Acoplar (subir nivel)'];
     this.choiceButtons = [];
-    const baseY = 470;
 
     choices.forEach((label, i) => {
       const btn = this.add
-        .text(GAME_WIDTH / 2, baseY + i * 50, (i === 0 ? '[ E ] ' : '[ A ] ') + label, {
+        .text(GAME_WIDTH / 2, 560 + i * 44, (i === 0 ? '[ E ] ' : '[ A ] ') + label, {
           fontFamily: 'Arial, sans-serif',
           fontSize: '20px',
           color: COLORS.text
         })
         .setOrigin(0.5)
         .setScrollFactor(0)
-        .setDepth(DEPTH.overlay + 5)
+        .setDepth(DEPTH.overlay + 6)
         .setInteractive({ useHandCursor: true })
         .on('pointerdown', () => this.resolveWeaponChoice(i === 1 ? 'annex' : 'equip'));
       this.choiceButtons.push(btn);
@@ -500,21 +731,7 @@ class GameScene extends Phaser.Scene {
       this.choiceButtons.forEach((b) => b.destroy());
       this.choiceButtons = null;
     }
-    this.applyWeaponChoice(this.weaponChoice, mode);
-  }
-
-  applyWeaponChoice(opt, mode) {
-    this.coins -= opt.cost;
-    if (mode === 'annex' || opt.owned) {
-      const weapon = this.player.getWeapon(opt.weaponKey);
-      if (weapon) {
-        weapon.level += 1;
-      }
-    } else {
-      this.player.weapons.push(new Weapon(WEAPON_DEFS[opt.weaponKey]));
-    }
-    this.audio.buy();
-    this.closeShop();
+    this.purchaseWeapon(this.weaponChoice, mode);
   }
 
   closeShop() {
@@ -522,7 +739,7 @@ class GameScene extends Phaser.Scene {
     this.nextWave();
   }
 
-  clearCards() {
+  destroyCards() {
     if (this.shopCards) {
       this.shopCards.forEach((c) => {
         c.card.destroy();
@@ -532,10 +749,30 @@ class GameScene extends Phaser.Scene {
       });
       this.shopCards = null;
     }
-    if (this.skipBtn) {
-      this.skipBtn.destroy();
-      this.skipBtn = null;
+  }
+
+  destroyShopButtons() {
+    if (this.shopButtons) {
+      this.shopButtons.forEach((b) => b.destroy());
+      this.shopButtons = null;
     }
+  }
+
+  destroySellSection() {
+    if (this.sellTitle) {
+      this.sellTitle.destroy();
+      this.sellTitle = null;
+    }
+    if (this.sellChips) {
+      this.sellChips.forEach((c) => c.destroy());
+      this.sellChips = null;
+    }
+  }
+
+  clearCards() {
+    this.destroyCards();
+    this.destroyShopButtons();
+    this.destroySellSection();
   }
 
   buildOverlay(title, subtitle) {
@@ -679,12 +916,15 @@ class GameScene extends Phaser.Scene {
     });
   }
 
-  getNearestEnemy(x, y) {
+  getNearestEnemy(x, y, maxDist, skipDoomed) {
     let best = null;
-    let bestDist = Infinity;
+    let bestDist = maxDist || Infinity;
     for (let i = 0; i < this.enemies.length; i++) {
       const e = this.enemies[i];
       if (e.dead) {
+        continue;
+      }
+      if (skipDoomed && e.hp - e.incomingDamage <= 0) {
         continue;
       }
       const d = Math.hypot(e.x - x, e.y - y);
@@ -696,7 +936,7 @@ class GameScene extends Phaser.Scene {
     return best;
   }
 
-  getFarthestEnemy(x, y) {
+  getFarthestEnemy(x, y, maxDist, skipDoomed) {
     let best = null;
     let bestDist = -1;
     for (let i = 0; i < this.enemies.length; i++) {
@@ -704,13 +944,40 @@ class GameScene extends Phaser.Scene {
       if (e.dead) {
         continue;
       }
+      if (skipDoomed && e.hp - e.incomingDamage <= 0) {
+        continue;
+      }
       const d = Math.hypot(e.x - x, e.y - y);
+      if (maxDist && d > maxDist) {
+        continue;
+      }
       if (d > bestDist) {
         bestDist = d;
         best = e;
       }
     }
     return best;
+  }
+
+  acquireTarget(x, y, range, damage) {
+    const target = this.getNearestEnemy(x, y, range, true);
+    if (target) {
+      target.incomingDamage += damage;
+    }
+    return target;
+  }
+
+  releaseReservation(projectile) {
+    if (!projectile.targetId || !projectile.reservedDamage) {
+      return;
+    }
+    for (let i = 0; i < this.enemies.length; i++) {
+      const e = this.enemies[i];
+      if (e.id === projectile.targetId) {
+        e.incomingDamage = Math.max(0, e.incomingDamage - projectile.reservedDamage);
+        return;
+      }
+    }
   }
 
   buildHUD() {

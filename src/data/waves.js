@@ -22,9 +22,9 @@ function waveDuration(wave) {
 
 function waveEnemyCount(wave) {
   if (wave > TOTAL_WAVES) {
-    return 30 + 6 * (wave - TOTAL_WAVES);
+    return 42 + 8 * (wave - TOTAL_WAVES);
   }
-  return Math.round(8 + (22 * (wave - 1)) / 8);
+  return Math.round(12 + (30 * (wave - 1)) / 8);
 }
 
 function waveComposition(wave) {

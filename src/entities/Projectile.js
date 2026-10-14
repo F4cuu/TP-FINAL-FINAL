@@ -9,6 +9,12 @@ class Projectile {
     this.life = options.life || 1.6;
     this.dead = false;
     this.hitIds = [];
+    this.explosive = !!options.explosive;
+    this.explosionRadius = options.explosionRadius || 0;
+    this.explosionColor = options.explosionColor || options.color;
+    this.exploded = false;
+    this.targetId = options.targetId || 0;
+    this.reservedDamage = options.reservedDamage || 0;
     this.sprite = scene.add.image(x, y, 'projectile');
     this.sprite.setTint(options.color).setDepth(DEPTH.projectile);
     this.sprite.setScale(this.radius / 6);

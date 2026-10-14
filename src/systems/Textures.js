@@ -50,6 +50,12 @@ function createTextures(scene) {
   g.generateTexture('particle', 8, 8);
 
   g.clear();
+  g.fillStyle(0xffffff, 1);
+  g.fillRect(16, 4, 12, 40);
+  g.fillRect(4, 16, 40, 12);
+  g.generateTexture('spawn_cross', 48, 48);
+
+  g.clear();
   g.fillStyle(COLORS.arena, 1);
   g.fillRect(0, 0, 64, 64);
   g.lineStyle(1, COLORS.grid, 0.5);
