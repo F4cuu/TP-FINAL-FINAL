@@ -141,12 +141,24 @@
   - `AGENTS.md` (creado).
   - `MEMORIA DE PROYECTO.md` (este archivo).
   - `.gitignore` (creado).
-- **Código:** aun no existe. No se ha creado el esqueleto del juego en Phaser 4.
+- **Código (implementado):** esqueleto jugable en Phaser 4.
+  - `index.html`: carga Phaser 4.2.1 por CDN (jsDelivr) + scripts clásicos (sin bundler) en orden de dependencia.
+  - `src/main.js`: config `Phaser.Game` (1280x720, Scale.FIT, lista de escenas).
+  - `src/data/`: `constants.js`, `enemies.js`, `weapons.js`, `waves.js`, `upgrades.js` (balance separado de la lógica).
+  - `src/entities/`: `Player.js`, `Enemy.js`, `Projectile.js` (POO; física manual por distancia).
+  - `src/factories/EnemyFactory.js`: creación + spawn en borde de arena lejos del jugador.
+  - `src/weapons/Weapon.js`: Strategy de disparo (`projectile`, `aoe`, `aoe_target`, `burst`).
+  - `src/scenes/`: `Boot`, `Start`, `Intro`, `Menu`, `Options`, `Game`, `Pause`, `GameOver` (patrón State).
+  - `src/systems/`: `Textures.js` (texturas geométricas generadas), `AudioManager.js` (WebAudio sintetizado), `ScoreStore.js` (récords en localStorage).
+- **Cómo ejecutar:** abrir `index.html` en el navegador (los scripts clásicos no requieren servidor). El CDN de Phaser necesita internet.
+- **Simplificaciones actuales:** el tiempo de tienda no está limitado a 1 minuto real (es una pantalla entre oleadas); el bucle de vidas/cura respeta el GDD.
 - **Git:** repositorio inicializado en rama `main`.
   - Remoto: `https://github.com/F4cuu/TP-FINAL-FINAL.git` (origin).
   - Identidad local: `F4cuu` / `f4cundoibanez@gmail.com`.
-  - Primer commit: `2a8c8ab` — `docs: agregar GDD, AGENTS.md, memoria de proyecto y gitignore`.
-- **Decisión sobre lenguaje/estructura:** queda a criterio del agente (TypeScript o JS puro; datos de balance separados de la lógica).
+  - Commits en `main`: `2a8c8ab` (docs iniciales) y `93a6a0b` (GDD ampliado).
+  - Rama de trabajo actual: `feature/juego-base` (contiene el código, sin commitear).
+- **Decisión sobre lenguaje/estructura:** JavaScript puro + Phaser por CDN (sin bundler); datos de balance separados de la lógica.
+- **Verificación:** sintaxis de los 22 archivos JS validada con `node --check`; prueba smoke en Chrome headless (`--dump-dom`) recorriendo Boot, GameScene, tienda, victoria, modo infinito, game over, menú, opciones, intro y pausa → 0 errores.
 
 ## 6. Convenciones técnicas y de trabajo
 
