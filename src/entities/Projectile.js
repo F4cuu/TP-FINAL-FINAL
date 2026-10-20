@@ -15,12 +15,16 @@ class Projectile {
     this.exploded = false;
     this.targetId = options.targetId || 0;
     this.reservedDamage = options.reservedDamage || 0;
+    this.prevX = x;
+    this.prevY = y;
     this.sprite = scene.add.image(x, y, 'projectile');
     this.sprite.setTint(options.color).setDepth(DEPTH.projectile);
     this.sprite.setScale(this.radius / 6);
   }
 
   update(dt) {
+    this.prevX = this.sprite.x;
+    this.prevY = this.sprite.y;
     this.sprite.x += this.vx * dt;
     this.sprite.y += this.vy * dt;
     this.life -= dt;

@@ -49,7 +49,7 @@ class Enemy {
       const cx = this.chargeTarget.x - this.sprite.x;
       const cy = this.chargeTarget.y - this.sprite.y;
       const cl = Math.hypot(cx, cy) || 1;
-      const chargeSpeed = this.speed * 7;
+      const chargeSpeed = this.speed * 2;
       this.sprite.x += (cx / cl) * chargeSpeed * dt;
       this.sprite.y += (cy / cl) * chargeSpeed * dt;
       if (this.chargeTimer <= 0) {

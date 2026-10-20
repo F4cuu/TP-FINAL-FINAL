@@ -168,6 +168,11 @@
 - **Aparición ilimitada por oleada:** ya no hay tope de enemigos. `updateWave` recarga la cola (`buildSpawnQueue`) cuando se agota y sigue apareciendo hasta que termina el tiempo de la oleada. Los **jefes** quedan exceptuados (aparecen una sola vez al inicio de las oleadas 3/6/9).
 - **Velocidad de aparición por oleada:** nuevo `waveSpawnInterval(wave)` en `waves.js`: 0,70 s (oleada 1) → 0,38 s (oleada 9), y 0,28 → … en modo infinito (mín. 0,20). Reemplaza la fórmula anterior basada en tamaño de cola.
 
+### Ajustes de jugabilidad — cuarta tanda (velocidades)
+- **Enemigos:** Simple 150→260 (muy rápido), Cazador 260→340 (rapidísimo), Compuesto 100→190 (rápido), Jefe 60→300 (igual al jugador). La embestida del jefe pasó de `speed*7` a `speed*2` (~600).
+- **Proyectiles MUY rápidos:** toxina 800→1600, exotoxina 700→1500, plásmido 620→1400, torpedo 430→1400.
+- **Colisión barrida:** `Projectile` guarda `prevX/prevY` y `GameScene.segmentDistance` calcula la distancia punto-segmento del recorrido, para que los proyectiles ultra rápidos no atraviesen enemigos (tunneling).
+
 - **Git:** repositorio inicializado en rama `main`.
   - Remoto: `https://github.com/F4cuu/TP-FINAL-FINAL.git` (origin).
   - Identidad local: `F4cuu` / `f4cundoibanez@gmail.com`.

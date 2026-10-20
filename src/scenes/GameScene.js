@@ -164,9 +164,15 @@ class GameScene extends Phaser.Scene {
       if (projectile.hitIds.indexOf(enemy.id) !== -1) {
         continue;
       }
-      const dx = enemy.x - projectile.sprite.x;
-      const dy = enemy.y - projectile.sprite.y;
-      if (Math.hypot(dx, dy) < enemy.radius + projectile.radius) {
+      const dist = this.segmentDistance(
+        enemy.x,
+        enemy.y,
+        projectile.prevX,
+        projectile.prevY,
+        projectile.sprite.x,
+        projectile.sprite.y
+      );
+      if (dist < enemy.radius + projectile.radius) {
         if (projectile.explosive) {
           this.explodeProjectile(projectile, enemy.x, enemy.y);
           projectile.dead = true;
@@ -916,6 +922,20 @@ class GameScene extends Phaser.Scene {
       duration: 700,
       onComplete: () => text.destroy()
     });
+  }
+
+  segmentDistance(px, py, ax, ay, bx, by) {
+    const abx = bx - ax;
+    const aby = by - ay;
+    const len2 = abx * abx + aby * aby;
+    let t = 0;
+    if (len2 > 0) {
+      t = ((px - ax) * abx + (py - ay) * aby) / len2;
+      t = Phaser.Math.Clamp(t, 0, 1);
+    }
+    const cx = ax + abx * t;
+    const cy = ay + aby * t;
+    return Math.hypot(px - cx, py - cy);
   }
 
   getNearestEnemy(x, y, maxDist, skipDoomed) {
