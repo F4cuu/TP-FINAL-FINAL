@@ -34,6 +34,13 @@ function waveComposition(wave) {
   return WAVE_COMPOSITION[8];
 }
 
+function waveSpawnInterval(wave) {
+  if (wave > TOTAL_WAVES) {
+    return Math.max(0.2, 0.3 - 0.02 * (wave - TOTAL_WAVES));
+  }
+  return Math.max(0.3, 0.7 - 0.04 * (wave - 1));
+}
+
 function buildSpawnQueue(wave) {
   const composition = waveComposition(wave);
   const total = waveEnemyCount(wave);

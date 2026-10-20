@@ -164,6 +164,10 @@
 - **Más y más rápidos enemigos:** cantidad por oleada 8→12 … 30→42 (`waveEnemyCount`), intervalo de aparición más corto (`waveTimeLeft / (cola * 2)`), primer spawn a 0,2 s y telegrafiado reducido a `SPAWN_TELEGRAPH` 0,9→**0,55** s (jefe 1,15 s).
 - **Apuntado inteligente (anti-overkill):** cada arma reserva su daño sobre el objetivo elegido en `enemy.incomingDamage` (los proyectiles en vuelo "comprometen" daño). Al elegir objetivo se descartan los enemigos que ya van a morir (`hp - incomingDamage <= 0`) y se apunta a otro; si no hay otro, no se dispara. La reserva se libera cuando el proyectil se destruye (`GameScene.releaseReservation`). Nuevos helpers `GameScene.acquireTarget` y `getNearestEnemy/getFarthestEnemy(..., skipDoomed)`; `Weapon` reescrito a `tryFire`/`fireSpread`/`fireSingle`/`fireTorpedo`.
 
+### Ajustes de jugabilidad — tercera tanda
+- **Aparición ilimitada por oleada:** ya no hay tope de enemigos. `updateWave` recarga la cola (`buildSpawnQueue`) cuando se agota y sigue apareciendo hasta que termina el tiempo de la oleada. Los **jefes** quedan exceptuados (aparecen una sola vez al inicio de las oleadas 3/6/9).
+- **Velocidad de aparición por oleada:** nuevo `waveSpawnInterval(wave)` en `waves.js`: 0,70 s (oleada 1) → 0,38 s (oleada 9), y 0,28 → … en modo infinito (mín. 0,20). Reemplaza la fórmula anterior basada en tamaño de cola.
+
 - **Git:** repositorio inicializado en rama `main`.
   - Remoto: `https://github.com/F4cuu/TP-FINAL-FINAL.git` (origin).
   - Identidad local: `F4cuu` / `f4cundoibanez@gmail.com`.

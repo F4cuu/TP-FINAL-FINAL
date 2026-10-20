@@ -212,13 +212,15 @@ class GameScene extends Phaser.Scene {
   updateWave(dt) {
     this.waveTimeLeft -= dt;
 
-    if (this.spawnQueue.length > 0) {
-      this.spawnTimer -= dt;
-      if (this.spawnTimer <= 0) {
-        this.spawnTimer = this.spawnInterval;
-        const type = this.spawnQueue.shift();
-        this.queueSpawn(type);
-      }
+    if (this.spawnQueue.length === 0) {
+      this.spawnQueue = buildSpawnQueue(this.wave);
+    }
+
+    this.spawnTimer -= dt;
+    if (this.spawnTimer <= 0) {
+      this.spawnTimer = this.spawnInterval;
+      const type = this.spawnQueue.shift();
+      this.queueSpawn(type);
     }
 
     if (this.waveTimeLeft <= 0) {
@@ -278,7 +280,7 @@ class GameScene extends Phaser.Scene {
     this.wave = wave;
     this.waveTimeLeft = Math.min(20 + 4 * (wave - 1), 50);
     this.spawnQueue = buildSpawnQueue(wave);
-    this.spawnInterval = this.waveTimeLeft / Math.max(1, this.spawnQueue.length * 2);
+    this.spawnInterval = waveSpawnInterval(wave);
     this.spawnTimer = 0.2;
 
     if (isBossWave(wave)) {
