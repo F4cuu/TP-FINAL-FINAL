@@ -5,8 +5,8 @@ class Enemy {
     this.scene = scene;
     this.def = def;
     this.id = ++ENEMY_ID;
-    this.maxHp = def.hp;
-    this.hp = def.hp;
+    this.maxHp = enemyMaxHp(def, scene.wave || 1);
+    this.hp = this.maxHp;
     this.damage = def.damage;
     this.speed = def.speed;
     this.radius = def.radius;
@@ -25,6 +25,8 @@ class Enemy {
     this.chargeTimer = 0;
 
     this.sprite = scene.add.image(x, y, def.texture).setDepth(DEPTH.enemy);
+    this.baseScale = (def.spriteHeight || def.radius * 2) / this.sprite.height;
+    this.sprite.setScale(this.baseScale);
   }
 
   update(dt, player, enemies) {
@@ -32,6 +34,7 @@ class Enemy {
       this.updateBoss(dt, player);
     }
 
+    const previousX = this.sprite.x;
     let dirX = player.x - this.sprite.x;
     let dirY = player.y - this.sprite.y;
     const dist = Math.hypot(dirX, dirY) || 1;
@@ -64,11 +67,16 @@ class Enemy {
     this.sprite.x = Phaser.Math.Clamp(this.sprite.x, this.radius, ARENA_WIDTH - this.radius);
     this.sprite.y = Phaser.Math.Clamp(this.sprite.y, this.radius, ARENA_HEIGHT - this.radius);
 
+    const movedX = this.sprite.x - previousX;
+    if (Math.abs(movedX) > 0.01) {
+      this.sprite.setFlipX(movedX < 0);
+    }
+
     this.separate(enemies);
 
     this.breath += dt * 4;
     const b = Math.sin(this.breath);
-    this.sprite.setScale(1 + b * 0.05, 1 + b * 0.08);
+    this.sprite.setScale(this.baseScale * (1 + b * 0.05), this.baseScale * (1 + b * 0.08));
 
     this.trailTimer -= dt;
     if (this.trailTimer <= 0) {

@@ -59,6 +59,8 @@ class GameScene extends Phaser.Scene {
   onKey(event) {
     if (this.phase === 'shop') {
       this.handleShopKey(event);
+    } else if (this.phase === 'bossReward') {
+      this.handleBossRewardKey(event);
     } else if (this.phase === 'victory') {
       this.handleVictoryKey(event);
     } else if (this.phase === 'playing') {
@@ -204,6 +206,10 @@ class GameScene extends Phaser.Scene {
     this.coins += gain;
     this.spawnCoin(enemy.x, enemy.y, gain);
 
+    if (enemy.isBoss && this.phase === 'playing') {
+      this.showBossReward();
+    }
+
     const sprite = enemy.sprite;
     this.tweens.add({
       targets: sprite,
@@ -216,6 +222,9 @@ class GameScene extends Phaser.Scene {
   }
 
   updateWave(dt) {
+    if (this.phase !== 'playing') {
+      return;
+    }
     this.waveTimeLeft -= dt;
 
     if (this.spawnQueue.length === 0) {
@@ -282,7 +291,35 @@ class GameScene extends Phaser.Scene {
     this.pendingSpawns = [];
   }
 
+  clearBattlefield() {
+    this.clearPendingSpawns();
+
+    this.enemies.forEach((enemy) => {
+      if (enemy.sprite && enemy.sprite.active) {
+        this.tweens.killTweensOf(enemy.sprite);
+        enemy.sprite.destroy();
+      }
+      enemy.dead = true;
+    });
+    this.enemies = [];
+
+    this.projectiles.forEach((projectile) => {
+      if (projectile.sprite && projectile.sprite.active) {
+        projectile.sprite.destroy();
+      }
+    });
+    this.projectiles = [];
+  }
+
+  resetArenaForWave() {
+    this.clearBattlefield();
+    this.player.hp = this.player.maxHp;
+    this.player.sprite.setPosition(ARENA_WIDTH / 2, ARENA_HEIGHT / 2);
+    this.cameras.main.centerOn(ARENA_WIDTH / 2, ARENA_HEIGHT / 2);
+  }
+
   startWave(wave) {
+    this.resetArenaForWave();
     this.wave = wave;
     this.waveTimeLeft = Math.min(20 + 4 * (wave - 1), 50);
     this.spawnQueue = buildSpawnQueue(wave);
@@ -298,7 +335,7 @@ class GameScene extends Phaser.Scene {
 
   endWave() {
     this.audio.waveEnd();
-    this.clearPendingSpawns();
+    this.clearBattlefield();
 
     if (!this.infinite && this.wave >= TOTAL_WAVES) {
       this.showVictory();
@@ -311,6 +348,98 @@ class GameScene extends Phaser.Scene {
   nextWave() {
     this.startWave(this.wave + 1);
     this.phase = 'playing';
+  }
+
+  showBossReward() {
+    this.phase = 'bossReward';
+    this.bossRewardOptions = this.buildShopOptions();
+    this.buildOverlay('JEFE DERROTADO', 'Elegí una recompensa gratis (1 / 2 / 3)');
+    this.raiseCoinHud();
+    this.buildBossRewardCards();
+  }
+
+  buildBossRewardCards() {
+    const startX = GAME_WIDTH / 2 - 340;
+    this.bossRewardOptions.forEach((opt, i) => {
+      const x = startX + i * 340;
+      const y = 360;
+
+      const card = this.add
+        .rectangle(x, y, 300, 230, 0x1d2a54, 0.95)
+        .setStrokeStyle(3, 0x9be15d, 1)
+        .setScrollFactor(0)
+        .setDepth(DEPTH.overlay + 1)
+        .setInteractive({ useHandCursor: true })
+        .on('pointerdown', () => this.chooseBossReward(i));
+
+      const title = this.add
+        .text(x, y - 70, opt.name, {
+          fontFamily: 'Arial, sans-serif',
+          fontSize: '24px',
+          color: '#e8f0ff',
+          align: 'center',
+          wordWrap: { width: 270 }
+        })
+        .setOrigin(0.5)
+        .setScrollFactor(0)
+        .setDepth(DEPTH.overlay + 2);
+
+      const desc = this.add
+        .text(x, y + 10, opt.desc, {
+          fontFamily: 'Arial, sans-serif',
+          fontSize: '18px',
+          color: COLORS.textDim,
+          align: 'center',
+          wordWrap: { width: 270 }
+        })
+        .setOrigin(0.5)
+        .setScrollFactor(0)
+        .setDepth(DEPTH.overlay + 2);
+
+      const cost = this.add
+        .text(x, y + 80, 'Gratis', {
+          fontFamily: 'Arial, sans-serif',
+          fontSize: '22px',
+          color: '#9be15d'
+        })
+        .setOrigin(0.5)
+        .setScrollFactor(0)
+        .setDepth(DEPTH.overlay + 2);
+
+      this.overlay.push(card, title, desc, cost);
+    });
+  }
+
+  handleBossRewardKey(event) {
+    if (event.key === '1' || event.key === '2' || event.key === '3') {
+      this.chooseBossReward(parseInt(event.key, 10) - 1);
+    }
+  }
+
+  chooseBossReward(index) {
+    if (this.phase !== 'bossReward') {
+      return;
+    }
+    const opt = this.bossRewardOptions[index];
+    if (!opt || opt.sold) {
+      return;
+    }
+
+    if (opt.kind === 'upgrade') {
+      opt.apply(this.player);
+    } else {
+      const owned = this.player.getWeapon(opt.weaponKey);
+      if (owned) {
+        owned.level += 1;
+      } else {
+        this.player.weapons.push(new Weapon(WEAPON_DEFS[opt.weaponKey]));
+      }
+    }
+    opt.sold = true;
+    this.audio.buy();
+    this.clearOverlay();
+    this.restoreCoinHud();
+    this.endWave();
   }
 
   gameOver() {
@@ -379,12 +508,30 @@ class GameScene extends Phaser.Scene {
     this.shopRerolls = 0;
     this.shopIndex = 0;
     this.shopOptions = this.buildShopOptions();
-    this.buildOverlay('TIENDA', 'Monedas: ' + this.coins);
-    this.shopCoins = this.overlayTitle;
+    this.buildOverlay(
+      'TIENDA',
+      'Elegí una mejora (precios x' + shopPriceMultiplier(this.wave).toFixed(1) + ')'
+    );
+    this.raiseCoinHud();
     this.buildCards();
     this.buildShopButtons();
     this.buildSellSection();
     this.refreshShop();
+  }
+
+  getRerollCost() {
+    const base = REROLL_BASE_COST + REROLL_COST_STEP * this.shopRerolls;
+    return shopPrice(base, this.wave);
+  }
+
+  raiseCoinHud() {
+    this.coinPanel.setDepth(DEPTH.overlay + 3);
+    this.coinText.setDepth(DEPTH.overlay + 4);
+  }
+
+  restoreCoinHud() {
+    this.coinPanel.setDepth(DEPTH.hud);
+    this.coinText.setDepth(DEPTH.hud + 1);
   }
 
   buildShopOptions() {
@@ -395,7 +542,7 @@ class GameScene extends Phaser.Scene {
         kind: 'upgrade',
         name: up.name,
         desc: up.desc,
-        cost: up.baseCost,
+        cost: shopPrice(up.baseCost, this.wave),
         apply: up.apply,
         sold: false
       });
@@ -412,7 +559,7 @@ class GameScene extends Phaser.Scene {
         weaponKey: key,
         name: def.name,
         desc: owned ? 'Acoplar (subir nivel)' : 'Nueva arma',
-        cost: WEAPON_BASE_COST,
+        cost: shopPrice(WEAPON_BASE_COST, this.wave),
         owned: owned,
         sold: false
       });
@@ -595,13 +742,11 @@ class GameScene extends Phaser.Scene {
   }
 
   refreshShop() {
-    const rerollCost = REROLL_BASE_COST + REROLL_COST_STEP * this.shopRerolls;
+    const rerollCost = this.getRerollCost();
+    this.coinText.setText('Monedas: ' + this.coins);
     if (this.rerollBtn) {
       this.rerollBtn.setText('[ R ] Reroll (' + rerollCost + ')');
       this.rerollBtn.setColor(this.coins >= rerollCost ? '#9be15d' : '#eb3b5a');
-    }
-    if (this.shopCoins) {
-      this.shopCoins.setText('Monedas: ' + this.coins);
     }
 
     if (!this.shopCards) {
@@ -685,7 +830,7 @@ class GameScene extends Phaser.Scene {
   }
 
   rerollShop() {
-    const cost = REROLL_BASE_COST + REROLL_COST_STEP * this.shopRerolls;
+    const cost = this.getRerollCost();
     if (this.coins < cost) {
       this.audio.beep(180, 0.1, 'sawtooth', 0.05);
       return;
@@ -744,6 +889,7 @@ class GameScene extends Phaser.Scene {
 
   closeShop() {
     this.clearOverlay();
+    this.restoreCoinHud();
     this.nextWave();
   }
 
@@ -803,7 +949,7 @@ class GameScene extends Phaser.Scene {
         .setDepth(DEPTH.overlay + 1)
     );
     this.overlayTitle = this.add
-      .text(GAME_WIDTH / 2, 220, subtitle, {
+      .text(GAME_WIDTH / 2, 200, subtitle, {
         fontFamily: 'Arial, sans-serif',
         fontSize: '22px',
         color: COLORS.textDim
@@ -1044,15 +1190,22 @@ class GameScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setDepth(DEPTH.hud);
 
-    this.coinText = this.add
-      .text(GAME_WIDTH - 24, 26, '', {
-        fontFamily: 'Arial, sans-serif',
-        fontSize: '22px',
-        color: '#9be15d'
-      })
-      .setOrigin(1, 0)
+    this.coinPanel = this.add
+      .rectangle(24, 58, 196, 34, 0x000000, 0.5)
+      .setOrigin(0)
+      .setStrokeStyle(2, 0x3a5bd0, 1)
       .setScrollFactor(0)
       .setDepth(DEPTH.hud);
+
+    this.coinText = this.add
+      .text(36, 75, '', {
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '20px',
+        color: '#9be15d'
+      })
+      .setOrigin(0, 0.5)
+      .setScrollFactor(0)
+      .setDepth(DEPTH.hud + 1);
 
     this.weaponText = this.add
       .text(24, GAME_HEIGHT - 30, '', {

@@ -15,7 +15,9 @@ class Player {
     this.weapons = [];
     this.breath = 0;
 
-    this.sprite = scene.add.image(x, y, 'player').setDepth(DEPTH.player);
+    this.sprite = scene.add.image(x, y, PLAYER_DEF.texture).setDepth(DEPTH.player);
+    this.baseScale = PLAYER_DEF.spriteHeight / this.sprite.height;
+    this.sprite.setScale(this.baseScale);
   }
 
   get x() {
@@ -42,6 +44,12 @@ class Player {
       dy /= len;
     }
 
+    if (dx < 0) {
+      this.sprite.setFlipX(true);
+    } else if (dx > 0) {
+      this.sprite.setFlipX(false);
+    }
+
     this.sprite.x = Phaser.Math.Clamp(
       this.sprite.x + dx * this.speed * dt,
       this.radius,
@@ -55,7 +63,7 @@ class Player {
 
     this.breath += dt * 4;
     const b = Math.sin(this.breath);
-    this.sprite.setScale(1 + b * 0.03, 1 + b * 0.05);
+    this.sprite.setScale(this.baseScale * (1 + b * 0.03), this.baseScale * (1 + b * 0.05));
   }
 
   takeDamage(amount) {

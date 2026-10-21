@@ -7,10 +7,12 @@ const ARENA_HEIGHT = 2400;
 const TOTAL_WAVES = 9;
 
 const PLAYER_DEF = {
-  hp: 100,
+  hp: 30,
   speed: 300,
   radius: 18,
-  maxWeapons: 4
+  maxWeapons: 4,
+  texture: 'player_sprite',
+  spriteHeight: 52
 };
 
 const SPAWN_TELEGRAPH = 0.55;

@@ -61,3 +61,12 @@ const WEAPON_BASE_COST = 40;
 const REROLL_BASE_COST = 8;
 const REROLL_COST_STEP = 4;
 const SELL_WEAPON_VALUE = 20;
+const SHOP_PRICE_GROWTH = 1.35;
+
+function shopPriceMultiplier(wave) {
+  return Math.pow(SHOP_PRICE_GROWTH, Math.max(0, wave - 1));
+}
+
+function shopPrice(baseCost, wave) {
+  return Math.round(baseCost * shopPriceMultiplier(wave));
+}
