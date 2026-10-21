@@ -141,12 +141,45 @@
   - `AGENTS.md` (creado).
   - `MEMORIA DE PROYECTO.md` (este archivo).
   - `.gitignore` (creado).
-- **Código:** aun no existe. No se ha creado el esqueleto del juego en Phaser 4.
+- **Código (implementado):** esqueleto jugable en Phaser 4.
+  - `index.html`: carga Phaser 4.2.1 por CDN (jsDelivr) + scripts clásicos (sin bundler) en orden de dependencia.
+  - `src/main.js`: config `Phaser.Game` (1280x720, Scale.FIT, lista de escenas).
+  - `src/data/`: `constants.js`, `enemies.js`, `weapons.js`, `waves.js`, `upgrades.js` (balance separado de la lógica).
+  - `src/entities/`: `Player.js`, `Enemy.js`, `Projectile.js` (POO; física manual por distancia).
+  - `src/factories/EnemyFactory.js`: creación + spawn en borde de arena lejos del jugador.
+  - `src/weapons/Weapon.js`: Strategy de disparo (`projectile`, `aoe`, `aoe_target`, `burst`).
+  - `src/scenes/`: `Boot`, `Start`, `Intro`, `Menu`, `Options`, `Game`, `Pause`, `GameOver` (patrón State).
+  - `src/systems/`: `Textures.js` (texturas geométricas generadas), `AudioManager.js` (WebAudio sintetizado), `ScoreStore.js` (récords en localStorage).
+- **Cómo ejecutar:** abrir `index.html` en el navegador (los scripts clásicos no requieren servidor). El CDN de Phaser necesita internet.
+- **Simplificaciones actuales:** el tiempo de tienda no está limitado a 1 minuto real (es una pantalla entre oleadas); el bucle de vidas/cura respeta el GDD.
+
+### Ajustes de jugabilidad aplicados (post-esqueleto)
+- **Velocidades aumentadas (todas):** jugador 210→300; Simple 95→150; Cazador 175→260; Compuesto 62→100; Jefe 34→60; proyectiles toxin 560→800, exotoxina 500→700, plásmido 380→620, torpedo 430. Ritmo de aparición de enemigos ~1,5× más rápido.
+- **Spawn cerca del jugador con aviso:** los enemigos ya no aparecen en el borde lejano; ahora aparecen a 170-380 px del jugador (jefe 260-440) y antes de aparecer se dibuja una **cruz roja titilante** en la posición de aparición (`SPAWN_TELEGRAPH` = 0,9 s). El jefe titila 1,5 s.
+- **Alcance de armas (rango):** cada arma tiene un `range` máximo de objetivo; si no hay enemigo dentro del rango, no dispara (toxina 430, exotoxina 380, biofilm 280, esporas 480, plásmido 440, torpedo 520).
+- **Arma nueva — Torpedo pedorro:** proyectil lento que **explota en área** (radio 135), daño 45, recarga lenta 3,5 s. Tipo `explosive` en `Weapon`/`Projectile`.
+- **Tienda rediseñada (multi-compra):** permite **comprar varias opciones** por visita; botón **Continuar** (Enter/C); **Reroll** (costo 8 + 4/nivel, tecla R); **vender armas** haciendo clic en el chip del arma (+20 monedas, no se puede vender la única arma).
+
+### Ajustes de jugabilidad — segunda tanda
+- **Más y más rápidos enemigos:** cantidad por oleada 8→12 … 30→42 (`waveEnemyCount`), intervalo de aparición más corto (`waveTimeLeft / (cola * 2)`), primer spawn a 0,2 s y telegrafiado reducido a `SPAWN_TELEGRAPH` 0,9→**0,55** s (jefe 1,15 s).
+- **Apuntado inteligente (anti-overkill):** cada arma reserva su daño sobre el objetivo elegido en `enemy.incomingDamage` (los proyectiles en vuelo "comprometen" daño). Al elegir objetivo se descartan los enemigos que ya van a morir (`hp - incomingDamage <= 0`) y se apunta a otro; si no hay otro, no se dispara. La reserva se libera cuando el proyectil se destruye (`GameScene.releaseReservation`). Nuevos helpers `GameScene.acquireTarget` y `getNearestEnemy/getFarthestEnemy(..., skipDoomed)`; `Weapon` reescrito a `tryFire`/`fireSpread`/`fireSingle`/`fireTorpedo`.
+
+### Ajustes de jugabilidad — tercera tanda
+- **Aparición ilimitada por oleada:** ya no hay tope de enemigos. `updateWave` recarga la cola (`buildSpawnQueue`) cuando se agota y sigue apareciendo hasta que termina el tiempo de la oleada. Los **jefes** quedan exceptuados (aparecen una sola vez al inicio de las oleadas 3/6/9).
+- **Velocidad de aparición por oleada:** nuevo `waveSpawnInterval(wave)` en `waves.js`: 0,70 s (oleada 1) → 0,38 s (oleada 9), y 0,28 → … en modo infinito (mín. 0,20). Reemplaza la fórmula anterior basada en tamaño de cola.
+
+### Ajustes de jugabilidad — cuarta tanda (velocidades)
+- **Enemigos:** Simple 150→260 (muy rápido), Cazador 260→340 (rapidísimo), Compuesto 100→190 (rápido), Jefe 60→300 (igual al jugador). La embestida del jefe pasó de `speed*7` a `speed*2` (~600).
+- **Proyectiles MUY rápidos:** toxina 800→1600, exotoxina 700→1500, plásmido 620→1400, torpedo 430→1400.
+- **Colisión barrida:** `Projectile` guarda `prevX/prevY` y `GameScene.segmentDistance` calcula la distancia punto-segmento del recorrido, para que los proyectiles ultra rápidos no atraviesen enemigos (tunneling).
+
 - **Git:** repositorio inicializado en rama `main`.
   - Remoto: `https://github.com/F4cuu/TP-FINAL-FINAL.git` (origin).
   - Identidad local: `F4cuu` / `f4cundoibanez@gmail.com`.
-  - Primer commit: `2a8c8ab` — `docs: agregar GDD, AGENTS.md, memoria de proyecto y gitignore`.
-- **Decisión sobre lenguaje/estructura:** queda a criterio del agente (TypeScript o JS puro; datos de balance separados de la lógica).
+  - Commits en `main`: `2a8c8ab` (docs iniciales) y `93a6a0b` (GDD ampliado).
+  - Rama de trabajo actual: `feature/juego-base` (contiene el código, sin commitear).
+- **Decisión sobre lenguaje/estructura:** JavaScript puro + Phaser por CDN (sin bundler); datos de balance separados de la lógica.
+- **Verificación:** sintaxis de los 22 archivos JS validada con `node --check`; prueba smoke en Chrome headless (`--dump-dom`) recorriendo Boot, GameScene, tienda, victoria, modo infinito, game over, menú, opciones, intro y pausa → 0 errores.
 
 ## 6. Convenciones técnicas y de trabajo
 

@@ -1,0 +1,78 @@
+const WEAPON_DEFS = {
+  toxin: {
+    key: 'toxin',
+    name: 'Escupida de toxina',
+    type: 'projectile',
+    damage: 10,
+    cooldown: 0.6,
+    projectileSpeed: 1600,
+    range: 430,
+    color: 0x9be15d,
+    radius: 7,
+    count: 1,
+    spread: 0,
+    pierce: 0
+  },
+  exotoxin: {
+    key: 'exotoxin',
+    name: 'Abanico de exotoxina',
+    type: 'projectile',
+    damage: 5,
+    cooldown: 2,
+    projectileSpeed: 1500,
+    range: 380,
+    color: 0xf7b731,
+    radius: 6,
+    count: 5,
+    spread: 0.6,
+    pierce: 0
+  },
+  biofilm: {
+    key: 'biofilm',
+    name: 'Onda de biofilm',
+    type: 'aoe',
+    damage: 15,
+    cooldown: 3,
+    range: 280,
+    color: 0x45aaf2,
+    radius: 120
+  },
+  spores: {
+    key: 'spores',
+    name: 'Liberacion de esporas',
+    type: 'aoe_target',
+    damage: 25,
+    cooldown: 4,
+    range: 480,
+    color: 0xa55eea,
+    radius: 140
+  },
+  plasmid: {
+    key: 'plasmid',
+    name: 'Plasmido veloz',
+    type: 'burst',
+    damage: 8,
+    cooldown: 2,
+    projectileSpeed: 1400,
+    range: 440,
+    color: 0xeb3b5a,
+    radius: 6,
+    count: 1,
+    pierce: 99,
+    burstCount: 8,
+    burstInterval: 0.15
+  },
+  torpedo: {
+    key: 'torpedo',
+    name: 'Torpedo pedorro',
+    type: 'explosive',
+    damage: 45,
+    cooldown: 3.5,
+    projectileSpeed: 1400,
+    range: 520,
+    color: 0x8b5a2b,
+    radius: 12,
+    explosionRadius: 135,
+    pierce: 0
+  }
+};

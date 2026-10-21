@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pablito: Bacteria Survivor</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: #05070f;
+        height: 100%;
+        overflow: hidden;
+      }
+      #game {
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      canvas {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/phaser@4.2.1/dist/phaser.min.js"></script>
+
+    <script src="src/data/constants.js?v=4"></script>
+    <script src="src/data/enemies.js?v=4"></script>
+    <script src="src/data/weapons.js?v=4"></script>
+    <script src="src/data/waves.js?v=4"></script>
+    <script src="src/data/upgrades.js?v=4"></script>
+
+    <script src="src/systems/Textures.js?v=4"></script>
+    <script src="src/systems/AudioManager.js?v=4"></script>
+    <script src="src/systems/ScoreStore.js?v=4"></script>
+
+    <script src="src/entities/Projectile.js?v=4"></script>
+    <script src="src/entities/Enemy.js?v=4"></script>
+    <script src="src/entities/Player.js?v=4"></script>
+    <script src="src/factories/EnemyFactory.js?v=4"></script>
+    <script src="src/weapons/Weapon.js?v=4"></script>
+
+    <script src="src/scenes/BootScene.js?v=4"></script>
+    <script src="src/scenes/StartScene.js?v=4"></script>
+    <script src="src/scenes/IntroScene.js?v=4"></script>
+    <script src="src/scenes/MenuScene.js?v=4"></script>
+    <script src="src/scenes/OptionsScene.js?v=4"></script>
+    <script src="src/scenes/GameScene.js?v=4"></script>
+    <script src="src/scenes/PauseScene.js?v=4"></script>
+    <script src="src/scenes/GameOverScene.js?v=4"></script>
+
+    <script src="src/main.js?v=4"></script>
+  </body>
+</html>
