@@ -42,7 +42,15 @@ class Weapon {
         return;
       }
       this.timer = this.def.cooldown / player.fireRateMul;
-      game.applyAoe(player.x, player.y, this.def.radius * player.areaMul, damage, this.def.color);
+      game.registerWeaponShot(this.def.key);
+      game.applyAoe(
+        player.x,
+        player.y,
+        this.def.radius * player.areaMul,
+        damage,
+        this.def.color,
+        this.def.key
+      );
       game.audio.shoot();
       return;
     }
@@ -53,7 +61,15 @@ class Weapon {
         return;
       }
       this.timer = this.def.cooldown / player.fireRateMul;
-      game.applyAoe(target.x, target.y, this.def.radius * player.areaMul, damage, this.def.color);
+      game.registerWeaponShot(this.def.key);
+      game.applyAoe(
+        target.x,
+        target.y,
+        this.def.radius * player.areaMul,
+        damage,
+        this.def.color,
+        this.def.key
+      );
       game.audio.shoot();
       return;
     }
@@ -63,6 +79,7 @@ class Weapon {
         return;
       }
       this.timer = this.def.cooldown / player.fireRateMul;
+      game.registerWeaponShot(this.def.key);
       this.burstLeft = this.def.burstCount;
       this.burstTimer = 0;
       return;
@@ -73,6 +90,7 @@ class Weapon {
       return;
     }
     this.timer = this.def.cooldown / player.fireRateMul;
+    game.registerWeaponShot(this.def.key);
 
     if (type === 'explosive') {
       this.fireTorpedo(target, damage, player, game);
@@ -95,7 +113,8 @@ class Weapon {
       explosionColor: 0xf0932b,
       life: this.def.range / this.def.projectileSpeed + 0.1,
       targetId: target.id,
-      reservedDamage: damage
+      reservedDamage: damage,
+      weaponKey: this.def.key
     });
     game.audio.shoot();
   }
@@ -119,7 +138,8 @@ class Weapon {
         pierce: this.pierce,
         color: this.def.color,
         targetId: i === 0 ? target.id : 0,
-        reservedDamage: i === 0 ? damage : 0
+        reservedDamage: i === 0 ? damage : 0,
+        weaponKey: this.def.key
       });
     }
     game.audio.shoot();
@@ -141,7 +161,8 @@ class Weapon {
       pierce: this.pierce,
       color: this.def.color,
       targetId: target.id,
-      reservedDamage: damage
+      reservedDamage: damage,
+      weaponKey: this.def.key
     });
     game.audio.shoot();
   }

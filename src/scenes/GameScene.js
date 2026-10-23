@@ -13,8 +13,12 @@ class GameScene extends Phaser.Scene {
     this.spawnInterval = 1;
     this.infinite = false;
     this.coins = 0;
+    this.totalCoinsEarned = 0;
     this.kills = 0;
+    this.killsByType = { simple: 0, hunter: 0, compound: 0, boss: 0 };
+    this.weaponStats = {};
     this.totalTime = 0;
+    this.runTime = 0;
     this.nextSpawnId = 1;
 
     this.enemies = [];
@@ -77,6 +81,9 @@ class GameScene extends Phaser.Scene {
 
   update(time, delta) {
     const dt = delta / 1000;
+    if (this.phase === 'playing' || this.phase === 'shop' || this.phase === 'bossReward') {
+      this.runTime += dt;
+    }
     if (this.phase !== 'playing') {
       return;
     }
@@ -154,7 +161,14 @@ class GameScene extends Phaser.Scene {
     projectile.exploded = true;
     this.audio.hit();
     this.cameras.main.shake(160, 0.008);
-    this.applyAoe(x, y, projectile.explosionRadius, projectile.damage, projectile.explosionColor);
+    this.applyAoe(
+      x,
+      y,
+      projectile.explosionRadius,
+      projectile.damage,
+      projectile.explosionColor,
+      projectile.weaponKey
+    );
   }
 
   checkProjectileHits(projectile) {
@@ -182,9 +196,13 @@ class GameScene extends Phaser.Scene {
         }
         projectile.hitIds.push(enemy.id);
         this.audio.hit();
+        this.registerWeaponDamage(
+          projectile.weaponKey,
+          Math.min(projectile.damage, Math.max(0, enemy.hp))
+        );
         const killed = enemy.takeDamage(projectile.damage);
         if (killed) {
-          this.killEnemy(enemy);
+          this.killEnemy(enemy, projectile.weaponKey);
         }
         if (projectile.pierce > 0) {
           projectile.pierce -= 1;
@@ -196,14 +214,18 @@ class GameScene extends Phaser.Scene {
     }
   }
 
-  killEnemy(enemy) {
+  killEnemy(enemy, weaponKey) {
     if (enemy.dead) {
       return;
     }
     enemy.dead = true;
     this.kills += 1;
+    const typeKey = enemy.def.key;
+    this.killsByType[typeKey] = (this.killsByType[typeKey] || 0) + 1;
+    this.registerWeaponKill(weaponKey);
     const gain = Phaser.Math.Between(enemy.def.coins[0], enemy.def.coins[1]);
     this.coins += gain;
+    this.totalCoinsEarned += gain;
     this.spawnCoin(enemy.x, enemy.y, gain);
 
     if (enemy.isBoss && this.phase === 'playing') {
@@ -442,9 +464,64 @@ class GameScene extends Phaser.Scene {
     this.endWave();
   }
 
+  buildRunStats() {
+    let bestDamage = null;
+    let bestShots = null;
+    let bestKills = null;
+
+    Object.keys(this.weaponStats).forEach((key) => {
+      const def = WEAPON_DEFS[key];
+      const entry = {
+        key: key,
+        name: def ? def.name : key,
+        damage: Math.round(this.weaponStats[key].damage),
+        shots: this.weaponStats[key].shots,
+        kills: this.weaponStats[key].kills
+      };
+      if (!bestDamage || entry.damage > bestDamage.damage) {
+        bestDamage = entry;
+      }
+      if (!bestShots || entry.shots > bestShots.shots) {
+        bestShots = entry;
+      }
+      if (!bestKills || entry.kills > bestKills.kills) {
+        bestKills = entry;
+      }
+    });
+
+    return {
+      coinsEarned: this.totalCoinsEarned,
+      kills: this.kills,
+      killsByType: {
+        simple: this.killsByType.simple || 0,
+        hunter: this.killsByType.hunter || 0,
+        compound: this.killsByType.compound || 0,
+        boss: this.killsByType.boss || 0
+      },
+      bosses: this.killsByType.boss || 0,
+      time: Math.floor(this.runTime),
+      bestDamage: bestDamage,
+      bestShots: bestShots,
+      bestKills: bestKills,
+      weapons: this.player.weapons.map(function (weapon) {
+        return { name: weapon.def.name, level: weapon.level };
+      }),
+      player: {
+        maxHp: this.player.maxHp,
+        speed: Math.round(this.player.speed),
+        speedPct: Math.round((this.player.speedMul - 1) * 100),
+        damagePct: Math.round((this.player.damageMul - 1) * 100),
+        fireRatePct: Math.round((this.player.fireRateMul - 1) * 100),
+        areaPct: Math.round((this.player.areaMul - 1) * 100),
+        pierce: this.player.pierceBonus
+      }
+    };
+  }
+
   gameOver() {
     this.phase = 'gameover';
     this.audio.gameOver();
+    const stats = this.buildRunStats();
     const records = ScoreStore.save({
       coins: this.coins,
       wave: this.wave,
@@ -457,7 +534,8 @@ class GameScene extends Phaser.Scene {
       wave: this.wave,
       time: Math.floor(this.totalTime),
       kills: this.kills,
-      records: records
+      records: records,
+      stats: stats
     });
   }
 
@@ -473,6 +551,7 @@ class GameScene extends Phaser.Scene {
   }
 
   finishVictory() {
+    const stats = this.buildRunStats();
     const records = ScoreStore.save({
       coins: this.coins,
       wave: this.wave,
@@ -485,7 +564,8 @@ class GameScene extends Phaser.Scene {
       wave: this.wave,
       time: Math.floor(this.totalTime),
       kills: this.kills,
-      records: records
+      records: records,
+      stats: stats
     });
   }
 
@@ -736,6 +816,7 @@ class GameScene extends Phaser.Scene {
     }
     this.player.weapons.splice(idx, 1);
     this.coins += SELL_WEAPON_VALUE;
+    this.totalCoinsEarned += SELL_WEAPON_VALUE;
     this.audio.buy();
     this.buildSellSection();
     this.refreshShop();
@@ -994,7 +1075,35 @@ class GameScene extends Phaser.Scene {
     this.projectiles.push(new Projectile(this, x, y, vx, vy, options));
   }
 
-  applyAoe(x, y, radius, damage, color) {
+  getWeaponStats(key) {
+    if (!this.weaponStats[key]) {
+      this.weaponStats[key] = { shots: 0, damage: 0, kills: 0 };
+    }
+    return this.weaponStats[key];
+  }
+
+  registerWeaponShot(key) {
+    if (!key) {
+      return;
+    }
+    this.getWeaponStats(key).shots += 1;
+  }
+
+  registerWeaponDamage(key, amount) {
+    if (!key || amount <= 0) {
+      return;
+    }
+    this.getWeaponStats(key).damage += amount;
+  }
+
+  registerWeaponKill(key) {
+    if (!key) {
+      return;
+    }
+    this.getWeaponStats(key).kills += 1;
+  }
+
+  applyAoe(x, y, radius, damage, color, weaponKey) {
     const ring = this.add.image(x, y, 'particle').setDepth(DEPTH.effect);
     ring.setTint(color);
     ring.setDisplaySize(radius, radius).setAlpha(0.5);
@@ -1014,9 +1123,10 @@ class GameScene extends Phaser.Scene {
       }
       const d = Math.hypot(enemy.x - x, enemy.y - y);
       if (d < radius + enemy.radius) {
+        this.registerWeaponDamage(weaponKey, Math.min(damage, Math.max(0, enemy.hp)));
         const killed = enemy.takeDamage(damage);
         if (killed) {
-          this.killEnemy(enemy);
+          this.killEnemy(enemy, weaponKey);
         }
       }
     }

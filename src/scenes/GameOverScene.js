@@ -7,44 +7,159 @@ class GameOverScene extends Phaser.Scene {
     this.result = data || {};
   }
 
+  formatTime(seconds) {
+    const total = Math.max(0, Math.floor(seconds || 0));
+    const minutes = Math.floor(total / 60);
+    const secs = total % 60;
+    return minutes + ':' + String(secs).padStart(2, '0');
+  }
+
+  weaponMetric(entry, metric) {
+    if (!entry) {
+      return '—';
+    }
+    if (metric === 'damage') {
+      return entry.name + ' (' + entry.damage + ' daño)';
+    }
+    if (metric === 'shots') {
+      return entry.name + ' (' + entry.shots + ' disparos)';
+    }
+    return entry.name + ' (' + entry.kills + ' bajas)';
+  }
+
   create() {
     this.cameras.main.setBackgroundColor(COLORS.bg);
     const d = this.result;
+    const stats = d.stats || {};
+    const byType = stats.killsByType || {};
+    const player = stats.player || {};
+    const totalTime = stats.time != null ? stats.time : d.time || 0;
 
     this.add
-      .text(GAME_WIDTH / 2, 110, d.victory ? 'VICTORIA' : 'DERROTA', {
+      .text(GAME_WIDTH / 2, 46, d.victory ? 'VICTORIA' : 'DERROTA', {
         fontFamily: 'Arial Black, sans-serif',
-        fontSize: '60px',
+        fontSize: '50px',
         color: d.victory ? '#9be15d' : '#eb3b5a'
       })
       .setOrigin(0.5);
 
-    const summary = [
-      'Oleada alcanzada: ' + (d.wave || 0),
-      'Tiempo sobrevivido: ' + (d.time || 0) + 's',
-      'Enemigos eliminados: ' + (d.kills || 0),
-      'Monedas: ' + (d.coins || 0)
-    ].join('\n');
+    this.add
+      .text(
+        GAME_WIDTH / 2,
+        96,
+        'Oleada alcanzada: ' + (d.wave || 0) + '     Tiempo total: ' + this.formatTime(totalTime),
+        {
+          fontFamily: 'Arial, sans-serif',
+          fontSize: '19px',
+          color: COLORS.textDim
+        }
+      )
+      .setOrigin(0.5);
 
     this.add
-      .text(GAME_WIDTH / 2, 240, summary, {
-        fontFamily: 'Arial, sans-serif',
-        fontSize: '26px',
-        color: COLORS.text,
-        align: 'center',
-        lineSpacing: 10
+      .text(70, 150, 'COMBATE', {
+        fontFamily: 'Arial Black, sans-serif',
+        fontSize: '20px',
+        color: '#9be15d'
       })
-      .setOrigin(0.5);
+      .setOrigin(0, 0.5);
+
+    const combatLines = [
+      'Monedas conseguidas: ' + (stats.coinsEarned != null ? stats.coinsEarned : d.coins || 0),
+      'Enemigos comunes: ' + (byType.simple || 0),
+      'Enemigos cazadores: ' + (byType.hunter || 0),
+      'Enemigos compuestos: ' + (byType.compound || 0),
+      'Jefes derrotados: ' + (stats.bosses != null ? stats.bosses : byType.boss || 0),
+      'Total de enemigos: ' + (stats.kills != null ? stats.kills : d.kills || 0)
+    ];
+
+    this.add
+      .text(70, 184, combatLines.join('\n'), {
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '19px',
+        color: COLORS.text,
+        lineSpacing: 9
+      })
+      .setOrigin(0, 0);
+
+    this.add
+      .text(70, 405, 'ARMAS EQUIPADAS', {
+        fontFamily: 'Arial Black, sans-serif',
+        fontSize: '20px',
+        color: '#9be15d'
+      })
+      .setOrigin(0, 0.5);
+
+    const equipped = stats.weapons || [];
+    if (equipped.length === 0) {
+      this.add
+        .text(70, 433, '—', {
+          fontFamily: 'Arial, sans-serif',
+          fontSize: '16px',
+          color: COLORS.textDim
+        })
+        .setOrigin(0, 0);
+    } else {
+      equipped.slice(0, 4).forEach((weapon, i) => {
+        this.add
+          .text(70 + (i % 2) * 300, 433 + Math.floor(i / 2) * 29, weapon.name + ' Nv.' + weapon.level, {
+            fontFamily: 'Arial, sans-serif',
+            fontSize: '16px',
+            color: COLORS.textDim
+          })
+          .setOrigin(0, 0);
+      });
+    }
+
+    this.add
+      .text(690, 150, 'ARMAS Y ESTADÍSTICAS', {
+        fontFamily: 'Arial Black, sans-serif',
+        fontSize: '20px',
+        color: '#9be15d'
+      })
+      .setOrigin(0, 0.5);
+
+    const performanceLines = [
+      'Mayor daño: ' + this.weaponMetric(stats.bestDamage, 'damage'),
+      'Más disparos: ' + this.weaponMetric(stats.bestShots, 'shots'),
+      'Más bajas: ' + this.weaponMetric(stats.bestKills, 'kills'),
+      'Vida máxima: ' + (player.maxHp || PLAYER_DEF.hp),
+      'Velocidad: ' +
+        (player.speed || PLAYER_DEF.speed) +
+        ' (+' +
+        (player.speedPct || 0) +
+        '%)',
+      'Daño aumentado: +' + (player.damagePct || 0) + '%',
+      'Cadencia: +' + (player.fireRatePct || 0) + '%',
+      'Tamaño de área: +' + (player.areaPct || 0) + '%',
+      'Perforación: +' + (player.pierce || 0)
+    ];
+
+    this.add
+      .text(690, 184, performanceLines.join('\n'), {
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '19px',
+        color: COLORS.text,
+        lineSpacing: 9
+      })
+      .setOrigin(0, 0);
 
     const r = d.records || ScoreStore.get();
     this.add
       .text(
         GAME_WIDTH / 2,
-        400,
-        'Record: Oleada ' + r.maxWave + '  |  Tiempo ' + r.maxTime + 's  |  Bajas ' + r.maxKills + '  |  Monedas ' + r.maxCoins,
+        500,
+        'Record: Oleada ' +
+          r.maxWave +
+          '  |  Tiempo de combate ' +
+          this.formatTime(r.maxTime) +
+          '  |  Bajas ' +
+          r.maxKills +
+          '  |  Monedas ' +
+          r.maxCoins,
         {
           fontFamily: 'Arial, sans-serif',
-          fontSize: '20px',
+          fontSize: '17px',
           color: COLORS.textDim
         }
       )
@@ -58,9 +173,9 @@ class GameOverScene extends Phaser.Scene {
     this.items = [];
     this.buttons.forEach((b, i) => {
       const item = this.add
-        .text(GAME_WIDTH / 2, 500 + i * 60, b.label, {
+        .text(GAME_WIDTH / 2, 550 + i * 58, b.label, {
           fontFamily: 'Arial, sans-serif',
-          fontSize: '30px',
+          fontSize: '28px',
           color: COLORS.text
         })
         .setOrigin(0.5)
