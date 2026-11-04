@@ -173,6 +173,22 @@
 - **Proyectiles MUY rápidos:** toxina 800→1600, exotoxina 700→1500, plásmido 620→1400, torpedo 430→1400.
 - **Colisión barrida:** `Projectile` guarda `prevX/prevY` y `GameScene.segmentDistance` calcula la distancia punto-segmento del recorrido, para que los proyectiles ultra rápidos no atraviesen enemigos (tunneling).
 
+### Ajustes de jugabilidad — quinta tanda (balance de enemigos)
+- **Simple:** 305→250 px/s (más lento que el jugador).
+- **Cazador:** 305→360 px/s (más rápido que el jugador).
+- **Compuesto:** 60→90 HP (+50%); conserva 305 px/s.
+- **Jefes:** vida 3000/6000/10000→1500/3000/5000 (mitad); el fallback `ENEMY_DEFS.boss.hp` también queda en 1500.
+
+### Fix — carga de sprites desde file://
+- **Problema:** el loader de Phaser 4 **no puede cargar imágenes por `file://`** (falla para todos los PNG) y WebGL las rechaza por cross-origin (canvas tainted). Por eso los sprites de `SPRITES/` no se veían.
+- **Solución:** se embeben los 4 PNG como **data URI base64** en `src/data/sprites.js` (`SPRITE_DATA`) y `BootScene.preload` los carga con `this.load.image(key, SPRITE_DATA[key])`. Funciona abriendo `index.html` directamente (file://) y con renderer WebGL. `index.html` incluye `sprites.js`. El jefe usa la textura geométrica `enemy_boss` como respaldo; sus sprites propios se agregaron después (ver «Sprites de los jefes»).
+
+### Sprites de los jefes
+- Se agregaron `SPRITES/Jefe 1.png`, `Jefe 2.png` y `Jefe 3.png` (963×411 cada uno, fondo transparente). Se recortaron los márgenes transparentes antes de embeberlos como data URI en `SPRITE_DATA` (`enemy_boss_1`, `enemy_boss_2`, `enemy_boss_3`).
+- **Mapeo por oleada:** 3 → Jefe 1 (286×174), 6 → Jefe 2 (175×337), 9 → Jefe 3 (176×369).
+- `ENEMY_DEFS.boss.texturesByWave` define el mapeo; `Enemy` elige la textura según `scene.wave` y escala a un ancho visual de 120 px (`spriteWidth`) para mantener coherencia con el radio de colisión de 60 px.
+- `enemy_boss` (geométrica) queda como respaldo si la oleada no tiene un sprite asignado.
+
 - **Git:** repositorio inicializado en rama `main`.
   - Remoto: `https://github.com/F4cuu/TP-FINAL-FINAL.git` (origin).
   - Identidad local: `F4cuu` / `f4cundoibanez@gmail.com`.

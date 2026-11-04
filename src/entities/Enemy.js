@@ -24,8 +24,11 @@ class Enemy {
     this.chargeTarget = null;
     this.chargeTimer = 0;
 
-    this.sprite = scene.add.image(x, y, def.texture).setDepth(DEPTH.enemy);
-    this.baseScale = (def.spriteHeight || def.radius * 2) / this.sprite.height;
+    const texture = (def.texturesByWave && def.texturesByWave[scene.wave]) || def.texture;
+    this.sprite = scene.add.image(x, y, texture).setDepth(DEPTH.enemy);
+    this.baseScale = def.spriteWidth
+      ? def.spriteWidth / this.sprite.width
+      : (def.spriteHeight || def.radius * 2) / this.sprite.height;
     this.sprite.setScale(this.baseScale);
   }
 

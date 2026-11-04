@@ -15,6 +15,7 @@ class Projectile {
     this.exploded = false;
     this.targetId = options.targetId || 0;
     this.reservedDamage = options.reservedDamage || 0;
+    this.weaponKey = options.weaponKey || '';
     this.prevX = x;
     this.prevY = y;
     this.sprite = scene.add.image(x, y, 'projectile');
