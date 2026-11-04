@@ -1,5 +1,5 @@
 const ENEMY_HP_GROWTH = 0.2;
-const BOSS_HP_BY_WAVE = { 3: 3000, 6: 6000, 9: 10000 };
+const BOSS_HP_BY_WAVE = { 3: 1500, 6: 3000, 9: 5000 };
 
 function enemyHpMultiplier(wave) {
   return Math.pow(1 + ENEMY_HP_GROWTH, Math.max(0, wave - 1));
@@ -19,7 +19,7 @@ const ENEMY_DEFS = {
     texture: 'enemy_simple_sprite',
     hp: 20,
     damage: 10,
-    speed: 305,
+    speed: 250,
     radius: 16,
     spriteHeight: 32,
     color: 0x4bcffa,
@@ -31,7 +31,7 @@ const ENEMY_DEFS = {
     texture: 'enemy_hunter_sprite',
     hp: 40,
     damage: 6,
-    speed: 305,
+    speed: 360,
     radius: 15,
     spriteHeight: 32,
     color: 0xf6e58d,
@@ -41,7 +41,7 @@ const ENEMY_DEFS = {
     key: 'compound',
     name: 'Compuesto',
     texture: 'enemy_compound_sprite',
-    hp: 60,
+    hp: 90,
     damage: 15,
     speed: 305,
     radius: 22,
@@ -53,7 +53,7 @@ const ENEMY_DEFS = {
     key: 'boss',
     name: 'Jefe',
     texture: 'enemy_boss',
-    hp: 3000,
+    hp: 1500,
     damage: 60,
     speed: 300,
     radius: 60,

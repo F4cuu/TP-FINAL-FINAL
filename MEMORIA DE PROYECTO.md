@@ -173,6 +173,12 @@
 - **Proyectiles MUY rápidos:** toxina 800→1600, exotoxina 700→1500, plásmido 620→1400, torpedo 430→1400.
 - **Colisión barrida:** `Projectile` guarda `prevX/prevY` y `GameScene.segmentDistance` calcula la distancia punto-segmento del recorrido, para que los proyectiles ultra rápidos no atraviesen enemigos (tunneling).
 
+### Ajustes de jugabilidad — quinta tanda (balance de enemigos)
+- **Simple:** 305→250 px/s (más lento que el jugador).
+- **Cazador:** 305→360 px/s (más rápido que el jugador).
+- **Compuesto:** 60→90 HP (+50%); conserva 305 px/s.
+- **Jefes:** vida 3000/6000/10000→1500/3000/5000 (mitad); el fallback `ENEMY_DEFS.boss.hp` también queda en 1500.
+
 ### Fix — carga de sprites desde file://
 - **Problema:** el loader de Phaser 4 **no puede cargar imágenes por `file://`** (falla para todos los PNG) y WebGL las rechaza por cross-origin (canvas tainted). Por eso los sprites de `SPRITES/` no se veían.
 - **Solución:** se embeben los 4 PNG como **data URI base64** en `src/data/sprites.js` (`SPRITE_DATA`) y `BootScene.preload` los carga con `this.load.image(key, SPRITE_DATA[key])`. Funciona abriendo `index.html` directamente (file://) y con renderer WebGL. `index.html` incluye `sprites.js`. El jefe sigue usando la textura geométrica `enemy_boss`.
