@@ -14,7 +14,7 @@ class IntroScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(COLORS.bg);
     this.text = this.add
       .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, '', {
-        fontFamily: 'Arial, sans-serif',
+        fontFamily: FONT_FAMILY,
         fontSize: '30px',
         color: COLORS.text,
         align: 'center',
@@ -25,7 +25,7 @@ class IntroScene extends Phaser.Scene {
 
     this.hint = this.add
       .text(GAME_WIDTH / 2, GAME_HEIGHT - 70, 'Presiona cualquier tecla para continuar', {
-        fontFamily: 'Arial, sans-serif',
+        fontFamily: FONT_FAMILY,
         fontSize: '18px',
         color: COLORS.textDim
       })

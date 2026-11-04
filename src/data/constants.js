@@ -1,6 +1,8 @@
 const GAME_WIDTH = 1280;
 const GAME_HEIGHT = 720;
 
+const FONT_FAMILY = "'Lilita One', Arial, sans-serif";
+
 const ARENA_WIDTH = 3200;
 const ARENA_HEIGHT = 2400;
 

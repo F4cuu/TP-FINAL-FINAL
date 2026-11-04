@@ -11,6 +11,14 @@ class BootScene extends Phaser.Scene {
 
   create() {
     createTextures(this);
-    this.scene.start('StartScene');
+    const start = () => this.scene.start('StartScene');
+    if (document.fonts && document.fonts.load) {
+      Promise.race([
+        document.fonts.load('16px "Lilita One"'),
+        new Promise((resolve) => setTimeout(resolve, 2000))
+      ]).then(start, start);
+    } else {
+      start();
+    }
   }
 }

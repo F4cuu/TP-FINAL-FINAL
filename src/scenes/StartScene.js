@@ -11,7 +11,7 @@ class StartScene extends Phaser.Scene {
 
     this.add
       .text(cx, cy - 60, 'PABLITO', {
-        fontFamily: 'Arial Black, sans-serif',
+        fontFamily: FONT_FAMILY,
         fontSize: '72px',
         color: '#e8f0ff'
       })
@@ -19,7 +19,7 @@ class StartScene extends Phaser.Scene {
 
     this.add
       .text(cx, cy + 10, 'Bacteria Survivor', {
-        fontFamily: 'Arial, sans-serif',
+        fontFamily: FONT_FAMILY,
         fontSize: '32px',
         color: COLORS.text
       })
@@ -27,7 +27,7 @@ class StartScene extends Phaser.Scene {
 
     const prompt = this.add
       .text(cx, cy + 120, 'Presiona cualquier tecla', {
-        fontFamily: 'Arial, sans-serif',
+        fontFamily: FONT_FAMILY,
         fontSize: '22px',
         color: COLORS.textDim
       })

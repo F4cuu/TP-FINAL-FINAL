@@ -37,7 +37,7 @@ class GameOverScene extends Phaser.Scene {
 
     this.add
       .text(GAME_WIDTH / 2, 46, d.victory ? 'VICTORIA' : 'DERROTA', {
-        fontFamily: 'Arial Black, sans-serif',
+        fontFamily: FONT_FAMILY,
         fontSize: '50px',
         color: d.victory ? '#9be15d' : '#eb3b5a'
       })
@@ -49,7 +49,7 @@ class GameOverScene extends Phaser.Scene {
         96,
         'Oleada alcanzada: ' + (d.wave || 0) + '     Tiempo total: ' + this.formatTime(totalTime),
         {
-          fontFamily: 'Arial, sans-serif',
+          fontFamily: FONT_FAMILY,
           fontSize: '19px',
           color: COLORS.textDim
         }
@@ -58,7 +58,7 @@ class GameOverScene extends Phaser.Scene {
 
     this.add
       .text(70, 150, 'COMBATE', {
-        fontFamily: 'Arial Black, sans-serif',
+        fontFamily: FONT_FAMILY,
         fontSize: '20px',
         color: '#9be15d'
       })
@@ -75,7 +75,7 @@ class GameOverScene extends Phaser.Scene {
 
     this.add
       .text(70, 184, combatLines.join('\n'), {
-        fontFamily: 'Arial, sans-serif',
+        fontFamily: FONT_FAMILY,
         fontSize: '19px',
         color: COLORS.text,
         lineSpacing: 9
@@ -84,7 +84,7 @@ class GameOverScene extends Phaser.Scene {
 
     this.add
       .text(70, 405, 'ARMAS EQUIPADAS', {
-        fontFamily: 'Arial Black, sans-serif',
+        fontFamily: FONT_FAMILY,
         fontSize: '20px',
         color: '#9be15d'
       })
@@ -94,7 +94,7 @@ class GameOverScene extends Phaser.Scene {
     if (equipped.length === 0) {
       this.add
         .text(70, 433, '—', {
-          fontFamily: 'Arial, sans-serif',
+          fontFamily: FONT_FAMILY,
           fontSize: '16px',
           color: COLORS.textDim
         })
@@ -103,7 +103,7 @@ class GameOverScene extends Phaser.Scene {
       equipped.slice(0, 4).forEach((weapon, i) => {
         this.add
           .text(70 + (i % 2) * 300, 433 + Math.floor(i / 2) * 29, weapon.name + ' Nv.' + weapon.level, {
-            fontFamily: 'Arial, sans-serif',
+            fontFamily: FONT_FAMILY,
             fontSize: '16px',
             color: COLORS.textDim
           })
@@ -113,7 +113,7 @@ class GameOverScene extends Phaser.Scene {
 
     this.add
       .text(690, 150, 'ARMAS Y ESTADÍSTICAS', {
-        fontFamily: 'Arial Black, sans-serif',
+        fontFamily: FONT_FAMILY,
         fontSize: '20px',
         color: '#9be15d'
       })
@@ -137,7 +137,7 @@ class GameOverScene extends Phaser.Scene {
 
     this.add
       .text(690, 184, performanceLines.join('\n'), {
-        fontFamily: 'Arial, sans-serif',
+        fontFamily: FONT_FAMILY,
         fontSize: '19px',
         color: COLORS.text,
         lineSpacing: 9
@@ -158,7 +158,7 @@ class GameOverScene extends Phaser.Scene {
           '  |  Monedas ' +
           r.maxCoins,
         {
-          fontFamily: 'Arial, sans-serif',
+          fontFamily: FONT_FAMILY,
           fontSize: '17px',
           color: COLORS.textDim
         }
@@ -174,7 +174,7 @@ class GameOverScene extends Phaser.Scene {
     this.buttons.forEach((b, i) => {
       const item = this.add
         .text(GAME_WIDTH / 2, 550 + i * 58, b.label, {
-          fontFamily: 'Arial, sans-serif',
+          fontFamily: FONT_FAMILY,
           fontSize: '28px',
           color: COLORS.text
         })

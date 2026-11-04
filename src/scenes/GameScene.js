@@ -54,6 +54,7 @@ class GameScene extends Phaser.Scene {
     this.wasd = this.input.keyboard.addKeys({ up: 'W', down: 'S', left: 'A', right: 'D' });
 
     this.buildHUD();
+    this.buildBossBar();
 
     this.input.keyboard.on('keydown', (event) => this.onKey(event));
 
@@ -396,7 +397,7 @@ class GameScene extends Phaser.Scene {
 
       const title = this.add
         .text(x, y - 70, opt.name, {
-          fontFamily: 'Arial, sans-serif',
+          fontFamily: FONT_FAMILY,
           fontSize: '24px',
           color: '#e8f0ff',
           align: 'center',
@@ -408,7 +409,7 @@ class GameScene extends Phaser.Scene {
 
       const desc = this.add
         .text(x, y + 10, opt.desc, {
-          fontFamily: 'Arial, sans-serif',
+          fontFamily: FONT_FAMILY,
           fontSize: '18px',
           color: COLORS.textDim,
           align: 'center',
@@ -420,7 +421,7 @@ class GameScene extends Phaser.Scene {
 
       const cost = this.add
         .text(x, y + 80, 'Gratis', {
-          fontFamily: 'Arial, sans-serif',
+          fontFamily: FONT_FAMILY,
           fontSize: '22px',
           color: '#9be15d'
         })
@@ -673,7 +674,7 @@ class GameScene extends Phaser.Scene {
 
       const title = this.add
         .text(x, y - 70, opt.name, {
-          fontFamily: 'Arial, sans-serif',
+          fontFamily: FONT_FAMILY,
           fontSize: '24px',
           color: '#e8f0ff',
           align: 'center',
@@ -685,7 +686,7 @@ class GameScene extends Phaser.Scene {
 
       const desc = this.add
         .text(x, y + 10, opt.desc, {
-          fontFamily: 'Arial, sans-serif',
+          fontFamily: FONT_FAMILY,
           fontSize: '18px',
           color: COLORS.textDim,
           align: 'center',
@@ -697,7 +698,7 @@ class GameScene extends Phaser.Scene {
 
       const cost = this.add
         .text(x, y + 80, opt.cost + ' monedas', {
-          fontFamily: 'Arial, sans-serif',
+          fontFamily: FONT_FAMILY,
           fontSize: '20px',
           color: '#9be15d'
         })
@@ -714,7 +715,7 @@ class GameScene extends Phaser.Scene {
 
     this.rerollBtn = this.add
       .text(440, 490, '', {
-        fontFamily: 'Arial, sans-serif',
+        fontFamily: FONT_FAMILY,
         fontSize: '22px',
         color: '#9be15d'
       })
@@ -726,7 +727,7 @@ class GameScene extends Phaser.Scene {
 
     this.continueBtn = this.add
       .text(840, 490, '[ Enter ] Continuar', {
-        fontFamily: 'Arial, sans-serif',
+        fontFamily: FONT_FAMILY,
         fontSize: '22px',
         color: '#9be15d'
       })
@@ -738,7 +739,7 @@ class GameScene extends Phaser.Scene {
 
     this.shopHint = this.add
       .text(GAME_WIDTH / 2, 688, '1 / 2 / 3 comprar     R reroll     Enter continuar', {
-        fontFamily: 'Arial, sans-serif',
+        fontFamily: FONT_FAMILY,
         fontSize: '16px',
         color: COLORS.textDim
       })
@@ -754,7 +755,7 @@ class GameScene extends Phaser.Scene {
 
     this.sellTitle = this.add
       .text(24, 575, 'Vender armas (clic):', {
-        fontFamily: 'Arial, sans-serif',
+        fontFamily: FONT_FAMILY,
         fontSize: '18px',
         color: COLORS.text
       })
@@ -768,7 +769,7 @@ class GameScene extends Phaser.Scene {
       this.sellChips.push(
         this.add
           .text(230, 575, '(no podes vender tu unica arma)', {
-            fontFamily: 'Arial, sans-serif',
+            fontFamily: FONT_FAMILY,
             fontSize: '16px',
             color: COLORS.textDim
           })
@@ -787,7 +788,7 @@ class GameScene extends Phaser.Scene {
           615,
           w.def.name + ' Nv.' + w.level + '  (+' + SELL_WEAPON_VALUE + ')',
           {
-            fontFamily: 'Arial, sans-serif',
+            fontFamily: FONT_FAMILY,
             fontSize: '16px',
             color: '#ffd166'
           }
@@ -934,7 +935,7 @@ class GameScene extends Phaser.Scene {
     choices.forEach((label, i) => {
       const btn = this.add
         .text(GAME_WIDTH / 2, 560 + i * 44, (i === 0 ? '[ E ] ' : '[ A ] ') + label, {
-          fontFamily: 'Arial, sans-serif',
+          fontFamily: FONT_FAMILY,
           fontSize: '20px',
           color: COLORS.text
         })
@@ -1021,7 +1022,7 @@ class GameScene extends Phaser.Scene {
     this.overlay.push(
       this.add
         .text(GAME_WIDTH / 2, 150, title, {
-          fontFamily: 'Arial Black, sans-serif',
+          fontFamily: FONT_FAMILY,
           fontSize: '48px',
           color: '#e8f0ff'
         })
@@ -1031,7 +1032,7 @@ class GameScene extends Phaser.Scene {
     );
     this.overlayTitle = this.add
       .text(GAME_WIDTH / 2, 200, subtitle, {
-        fontFamily: 'Arial, sans-serif',
+        fontFamily: FONT_FAMILY,
         fontSize: '22px',
         color: COLORS.textDim
       })
@@ -1046,7 +1047,7 @@ class GameScene extends Phaser.Scene {
     buttons.forEach((b, i) => {
       const btn = this.add
         .text(GAME_WIDTH / 2, 400 + i * 70, '[ ' + (i + 1) + ' ] ' + b.label, {
-          fontFamily: 'Arial, sans-serif',
+          fontFamily: FONT_FAMILY,
           fontSize: '30px',
           color: COLORS.text
         })
@@ -1147,7 +1148,7 @@ class GameScene extends Phaser.Scene {
   spawnDamageText(x, y, amount) {
     const text = this.add
       .text(x, y - 10, String(Math.round(amount)), {
-        fontFamily: 'Arial, sans-serif',
+        fontFamily: FONT_FAMILY,
         fontSize: '18px',
         color: '#ffe066'
       })
@@ -1165,7 +1166,7 @@ class GameScene extends Phaser.Scene {
   spawnCoin(x, y, amount) {
     const text = this.add
       .text(x, y - 20, '+' + amount, {
-        fontFamily: 'Arial, sans-serif',
+        fontFamily: FONT_FAMILY,
         fontSize: '16px',
         color: '#9be15d'
       })
@@ -1273,7 +1274,7 @@ class GameScene extends Phaser.Scene {
       .setDepth(DEPTH.hud);
     this.hpText = this.add
       .text(176, 38, 'HP', {
-        fontFamily: 'Arial, sans-serif',
+        fontFamily: FONT_FAMILY,
         fontSize: '16px',
         color: '#0b1026'
       })
@@ -1283,7 +1284,7 @@ class GameScene extends Phaser.Scene {
 
     this.waveText = this.add
       .text(GAME_WIDTH / 2, 26, '', {
-        fontFamily: 'Arial Black, sans-serif',
+        fontFamily: FONT_FAMILY,
         fontSize: '26px',
         color: '#e8f0ff'
       })
@@ -1292,7 +1293,7 @@ class GameScene extends Phaser.Scene {
       .setDepth(DEPTH.hud);
     this.timerText = this.add
       .text(GAME_WIDTH / 2, 60, '', {
-        fontFamily: 'Arial, sans-serif',
+        fontFamily: FONT_FAMILY,
         fontSize: '20px',
         color: COLORS.textDim
       })
@@ -1309,7 +1310,7 @@ class GameScene extends Phaser.Scene {
 
     this.coinText = this.add
       .text(36, 75, '', {
-        fontFamily: 'Arial, sans-serif',
+        fontFamily: FONT_FAMILY,
         fontSize: '20px',
         color: '#9be15d'
       })
@@ -1319,7 +1320,7 @@ class GameScene extends Phaser.Scene {
 
     this.weaponText = this.add
       .text(24, GAME_HEIGHT - 30, '', {
-        fontFamily: 'Arial, sans-serif',
+        fontFamily: FONT_FAMILY,
         fontSize: '18px',
         color: COLORS.text
       })
@@ -1333,6 +1334,26 @@ class GameScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setDepth(DEPTH.hud + 2)
       .setAlpha(0);
+  }
+
+  buildBossBar() {
+    const width = 190;
+    const height = 14;
+    this.bossBar = this.add.container(0, 0).setDepth(DEPTH.damageText).setVisible(false);
+    this.bossBarBg = this.add
+      .rectangle(0, 0, width + 6, height + 6, 0x000000, 0.75)
+      .setStrokeStyle(2, 0xeb3b5a, 0.9);
+    this.bossBarFill = this.add
+      .rectangle(-width / 2, 0, width, height, 0xeb3b5a)
+      .setOrigin(0, 0.5);
+    this.bossBarText = this.add
+      .text(0, -16, '', {
+        fontFamily: FONT_FAMILY,
+        fontSize: '15px',
+        color: '#ffb3c1'
+      })
+      .setOrigin(0.5);
+    this.bossBar.add([this.bossBarBg, this.bossBarFill, this.bossBarText]);
   }
 
   updateHUD() {
@@ -1350,6 +1371,19 @@ class GameScene extends Phaser.Scene {
       return w.def.name + ' Nv.' + w.level;
     });
     this.weaponText.setText(weaponNames.join('   '));
+
+    const boss = this.enemies.find(function (enemy) {
+      return enemy.isBoss && !enemy.dead;
+    });
+    if (boss) {
+      const bossRatio = Phaser.Math.Clamp(boss.hp / boss.maxHp, 0, 1);
+      this.bossBar.setVisible(true);
+      this.bossBar.setPosition(boss.sprite.x, boss.sprite.y - boss.sprite.displayHeight / 2 - 24);
+      this.bossBarFill.setScale(bossRatio, 1);
+      this.bossBarText.setText('JEFE  ' + Math.ceil(boss.hp) + ' / ' + boss.maxHp);
+    } else {
+      this.bossBar.setVisible(false);
+    }
 
     if (ratio < 0.3) {
       this.vignette.setAlpha((1 - ratio / 0.3) * 0.8 + Math.sin(this.totalTime * 8) * 0.1);
