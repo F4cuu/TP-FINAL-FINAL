@@ -1,5 +1,5 @@
 const ENEMY_HP_GROWTH = 0.2;
-const BOSS_HP_BY_WAVE = { 3: 1500, 6: 3000, 9: 5000 };
+const BOSS_HP_BY_WAVE = { 3: 1125, 6: 2250, 9: 3750 };
 
 function enemyHpMultiplier(wave) {
   return Math.pow(1 + ENEMY_HP_GROWTH, Math.max(0, wave - 1));
@@ -29,7 +29,7 @@ const ENEMY_DEFS = {
     key: 'hunter',
     name: 'Cazador',
     texture: 'enemy_hunter_sprite',
-    hp: 40,
+    hp: 38,
     damage: 6,
     speed: 360,
     radius: 15,
@@ -54,7 +54,7 @@ const ENEMY_DEFS = {
     name: 'Jefe',
     texture: 'enemy_boss',
     texturesByWave: { 3: 'enemy_boss_1', 6: 'enemy_boss_2', 9: 'enemy_boss_3' },
-    hp: 1500,
+    hp: 1125,
     damage: 60,
     speed: 300,
     radius: 60,

@@ -10,7 +10,7 @@ class PauseScene extends Phaser.Scene {
 
     this.add
       .text(GAME_WIDTH / 2, 140, 'PAUSA', {
-        fontFamily: 'Arial Black, sans-serif',
+        fontFamily: FONT_FAMILY,
         fontSize: '52px',
         color: '#e8f0ff'
       })
@@ -27,7 +27,7 @@ class PauseScene extends Phaser.Scene {
     this.buttons.forEach((b, i) => {
       const item = this.add
         .text(GAME_WIDTH / 2, 260 + i * 70, b.label, {
-          fontFamily: 'Arial, sans-serif',
+          fontFamily: FONT_FAMILY,
           fontSize: '30px',
           color: COLORS.text
         })

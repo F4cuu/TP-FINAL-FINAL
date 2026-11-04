@@ -8,7 +8,7 @@ class OptionsScene extends Phaser.Scene {
 
     this.add
       .text(GAME_WIDTH / 2, 120, 'Opciones', {
-        fontFamily: 'Arial Black, sans-serif',
+        fontFamily: FONT_FAMILY,
         fontSize: '50px',
         color: '#e8f0ff'
       })
@@ -16,7 +16,7 @@ class OptionsScene extends Phaser.Scene {
 
     this.statusText = this.add
       .text(GAME_WIDTH / 2, 280, '', {
-        fontFamily: 'Arial, sans-serif',
+        fontFamily: FONT_FAMILY,
         fontSize: '28px',
         color: COLORS.text
       })
@@ -24,7 +24,7 @@ class OptionsScene extends Phaser.Scene {
 
     this.toggleText = this.add
       .text(GAME_WIDTH / 2, 360, '[ Sonido: ON ]', {
-        fontFamily: 'Arial, sans-serif',
+        fontFamily: FONT_FAMILY,
         fontSize: '28px',
         color: '#9be15d'
       })
@@ -35,7 +35,7 @@ class OptionsScene extends Phaser.Scene {
 
     this.add
       .text(GAME_WIDTH / 2, 470, '[ Volver ]', {
-        fontFamily: 'Arial, sans-serif',
+        fontFamily: FONT_FAMILY,
         fontSize: '28px',
         color: COLORS.text
       })

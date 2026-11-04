@@ -188,6 +188,15 @@
 - **Mapeo por oleada:** 3 → Jefe 1 (286×174), 6 → Jefe 2 (175×337), 9 → Jefe 3 (176×369).
 - `ENEMY_DEFS.boss.texturesByWave` define el mapeo; `Enemy` elige la textura según `scene.wave` y escala a un ancho visual de 120 px (`spriteWidth`) para mantener coherencia con el radio de colisión de 60 px.
 - `enemy_boss` (geométrica) queda como respaldo si la oleada no tiene un sprite asignado.
+- **Actualización:** se regeneraron los data URI de `enemy_boss_2` y `enemy_boss_3` con los PNG revisados (mismo recorte de 175×337 y 176×369). `sprites.js` pasó a `?v=8` en `index.html`.
+
+### Presentación y balance — sexta tanda
+- **Tipografía:** todas las escenas usan `FONT_FAMILY` (`'Lilita One', Arial, sans-serif`) definida en `src/data/constants.js`. `index.html` carga Lilita One desde Google Fonts y `BootScene` espera `document.fonts.load('16px "Lilita One"')` (con respaldo de 2 s) antes de iniciar. Si la fuente no está disponible, se usa Arial.
+- **Menú principal:** decoración geométrica animada (grilla, halos, aro orbitando, microbios flotantes, burbujas y marco de esquinas), con paneles para título, récords y opciones. Navegación con flechas/WASD, confirmación con Enter/Espacio y mouse (hover/clic).
+- **Cazador:** vida 40→38 (−5%).
+- **Jefes:** vida 1500/3000/5000→1125/2250/3750 (−25%); el fallback `ENEMY_DEFS.boss.hp` queda en 1125.
+- **Barra de vida del jefe:** contenedor en coordenadas de mundo sobre el sprite del jefe (`y - displayHeight/2 - 24`), 190×14 px, relleno proporcional a `hp/maxHp` y texto `JEFE hp / maxHp`. Se oculta cuando no hay un jefe vivo. Profundidad `DEPTH.damageText`.
+- **Caché:** los scripts modificados pasan a `?v=9` en `index.html`; `sprites.js` conserva `?v=8`.
 
 - **Git:** repositorio inicializado en rama `main`.
   - Remoto: `https://github.com/F4cuu/TP-FINAL-FINAL.git` (origin).
