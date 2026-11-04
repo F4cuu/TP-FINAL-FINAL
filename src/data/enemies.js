@@ -53,10 +53,12 @@ const ENEMY_DEFS = {
     key: 'boss',
     name: 'Jefe',
     texture: 'enemy_boss',
+    texturesByWave: { 3: 'enemy_boss_1', 6: 'enemy_boss_2', 9: 'enemy_boss_3' },
     hp: 1500,
     damage: 60,
     speed: 300,
     radius: 60,
+    spriteWidth: 120,
     spriteHeight: 96,
     color: 0xe1b12c,
     coins: [50, 100]
