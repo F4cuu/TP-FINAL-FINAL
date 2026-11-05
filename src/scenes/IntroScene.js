@@ -12,6 +12,7 @@ class IntroScene extends Phaser.Scene {
 
   create() {
     this.cameras.main.setBackgroundColor(COLORS.bg);
+    applyUiCamera(this);
     this.text = this.add
       .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, '', {
         fontFamily: FONT_FAMILY,

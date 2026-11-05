@@ -5,6 +5,7 @@ class OptionsScene extends Phaser.Scene {
 
   create() {
     this.cameras.main.setBackgroundColor(COLORS.bg);
+    applyUiCamera(this);
 
     this.add
       .text(GAME_WIDTH / 2, 120, 'Opciones', {

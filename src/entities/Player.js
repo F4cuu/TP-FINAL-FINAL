@@ -14,6 +14,7 @@ class Player {
 
     this.weapons = [];
     this.breath = 0;
+    this.dustTimer = 0;
 
     this.sprite = scene.add.image(x, y, PLAYER_DEF.texture).setDepth(DEPTH.player);
     this.baseScale = PLAYER_DEF.spriteHeight / this.sprite.height;
@@ -61,9 +62,25 @@ class Player {
       ARENA_HEIGHT - this.radius
     );
 
+    this.emitDust(dt, dx, dy);
+
     this.breath += dt * 4;
     const b = Math.sin(this.breath);
     this.sprite.setScale(this.baseScale * (1 + b * 0.03), this.baseScale * (1 + b * 0.05));
+  }
+
+  // Nubecitas de polvo a los pies mientras se mueve.
+  emitDust(dt, dx, dy) {
+    if (dx === 0 && dy === 0) {
+      this.dustTimer = 0;
+      return;
+    }
+    this.dustTimer -= dt;
+    if (this.dustTimer <= 0) {
+      this.dustTimer = 0.07;
+      const feetY = this.sprite.y + this.baseScale * this.sprite.height * 0.42;
+      this.scene.spawnDust(this.sprite.x, feetY, dx, dy);
+    }
   }
 
   takeDamage(amount) {

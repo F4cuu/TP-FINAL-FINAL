@@ -198,6 +198,16 @@
 - **Barra de vida del jefe:** contenedor en coordenadas de mundo sobre el sprite del jefe (`y - displayHeight/2 - 24`), 190×14 px, relleno proporcional a `hp/maxHp` y texto `JEFE hp / maxHp`. Se oculta cuando no hay un jefe vivo. Profundidad `DEPTH.damageText`.
 - **Caché:** los scripts modificados pasan a `?v=9` en `index.html`; `sprites.js` conserva `?v=8`.
 
+### Game feel, resolución y música — séptima tanda
+- **Resolución 1920x1080:** `main.js` usa `RENDER_WIDTH/HEIGHT`. La interfaz sigue diseñada en 1280x720 (`GAME_WIDTH/HEIGHT`) y las cámaras aplican zoom 1,5 (`DISPLAY_SCALE`); nuevo `src/systems/Display.js` (`applyUiCamera`, `.toHud()` para el HUD fijo y textos rasterizados a 1,5x). La vista del mundo es la misma de antes, por lo que la dificultad no cambia. Si se quisiera ver más arena, habría que bajar el zoom de `GameScene` y reubicar el HUD.
+- **Polvo al moverse:** `Player.emitDust` → `GameScene.spawnDust` (textura `particle`, tween de ~0,45 s).
+- **Vibración de pantalla:** presets `SHAKE` en `constants.js` y `GameScene.shake()`: golpe de proyectil (45 ms, con enfriamiento), daño al jugador (110 ms), explosión (110 ms), jefe derrotado (220 ms).
+- **Jefes:** vida ×1,1 (`BOSS_HP_MULTIPLIER`): 1238 / 2475 / 4125. Matar al jefe ya no corta la oleada: sigue hasta que se acaba el tiempo y entonces se entrega la recompensa gratuita (`bossDefeatedThisWave`, `endWave` → `showBossReward` → `afterWave`).
+- **Muerte:** fase `dying` (2,4 s reales): cámara lenta hasta 0,18x (también tweens y música), zoom ×1,75 hacia el personaje, que se inclina y se apaga; sin daño por contacto ni nuevas apariciones. Luego `finishRun()` lanza `GameOverScene` con `scene.launch` y pausa `GameScene`: las estadísticas se ven sobre la partida detenida (también en la victoria). `GameOverScene.leaveTo()` detiene `GameScene` antes de reiniciar o ir al menú.
+- **Música:** loop de 8 compases en La menor sintetizado con WebAudio en `AudioManager` (bajo, arpegio, melodía, percusión). Respeta el interruptor de sonido, se atenúa en la pausa y se apaga con la muerte.
+- **Divergencias con el GDD (el GDD no se modificó):** §3 resolución interna 1280x720; §12 recompensa y fin de oleada al matar al jefe; «no hay música»; vida de jefes (el GDD ya figuraba desactualizado: 3000/6000/10000).
+- **Verificación:** `node --check` de todos los `.js`; prueba de lógica con Phaser simulado (jefe sin cortar la oleada, recompensa al terminar el tiempo, secuencia de muerte, `GameOverScene`) y del planificador de música con WebAudio simulado. **No se ejecutó en un navegador real:** falta probar visualmente el zoom/HUD, la vibración, el polvo y el sonido.
+
 - **Git:** repositorio inicializado en rama `main`.
   - Remoto: `https://github.com/F4cuu/TP-FINAL-FINAL.git` (origin).
   - Identidad local: `F4cuu` / `f4cundoibanez@gmail.com`.

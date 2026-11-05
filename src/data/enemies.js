@@ -1,5 +1,6 @@
 const ENEMY_HP_GROWTH = 0.2;
 const BOSS_HP_BY_WAVE = { 3: 1125, 6: 2250, 9: 3750 };
+const BOSS_HP_MULTIPLIER = 1.1;
 
 function enemyHpMultiplier(wave) {
   return Math.pow(1 + ENEMY_HP_GROWTH, Math.max(0, wave - 1));
@@ -7,7 +8,7 @@ function enemyHpMultiplier(wave) {
 
 function enemyMaxHp(def, wave) {
   if (def.key === 'boss') {
-    return BOSS_HP_BY_WAVE[wave] || def.hp;
+    return Math.round((BOSS_HP_BY_WAVE[wave] || def.hp) * BOSS_HP_MULTIPLIER);
   }
   return Math.round(def.hp * enemyHpMultiplier(wave));
 }
