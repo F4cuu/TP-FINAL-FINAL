@@ -64,6 +64,17 @@ class GameScene extends Phaser.Scene {
     this.wasd = this.input.keyboard.addKeys({ up: 'W', down: 'S', left: 'A', right: 'D' });
 
     this.buildHUD();
+    this.mapView = { want: false, blend: 0, engaged: false };
+    this.hazards = [];
+    this.hazardGfx = this.add.graphics().setDepth(DEPTH.trail + 1);
+    this.hudCompActive = false;
+    // Elementos fijos del HUD: se reescalan cuando la cámara se aleja (vista del mapa completo).
+    this.hudFix = [
+      this.hpBarBg, this.hpBarFill, this.hpText, this.waveText, this.timerText,
+      this.coinPanel, this.coinText, this.weaponText, this.noticeText, this.vignette
+    ].map(function (obj) {
+      return { obj: obj, x: obj.x, y: obj.y };
+    });
     this.buildBossBar();
 
     this.input.keyboard.on('keydown', (event) => this.onKey(event));
@@ -115,8 +126,11 @@ class GameScene extends Phaser.Scene {
     this.updateProjectiles(dt);
     this.updateSpawnMarkers(dt);
     this.updateWave(dt);
+    this.updateHazards(dt);
+    this.updateMapView(dt);
     this.updateMusicMode();
     this.updateHUD();
+    this.applyHudComp();
 
     if (this.player.hp <= 0) {
       this.beginDeath();
@@ -150,12 +164,11 @@ class GameScene extends Phaser.Scene {
       if (
         this.phase === 'playing' &&
         d < enemy.radius + this.player.radius &&
-        enemy.contactTimer <= 0
+        enemy.contactTimer <= 0 &&
+        !enemy.noContact
       ) {
         enemy.contactTimer = 0.6;
-        this.player.takeDamage(enemy.damage);
-        this.audio.hurt();
-        this.shake('hurt', true);
+        this.damagePlayer(enemy.damage);
       }
     }
   }
@@ -286,6 +299,200 @@ class GameScene extends Phaser.Scene {
     }
   }
 
+  // ---- Poderes de los jefes ----
+
+  damagePlayer(amount) {
+    this.player.takeDamage(amount);
+    this.audio.hurt();
+    this.shake('hurt', true);
+  }
+
+  // Embestida: la cámara se aleja hasta encuadrar toda la arena y queda fija.
+  beginMapView() {
+    if (this.phase === 'playing') {
+      this.mapView.want = true;
+    }
+  }
+
+  endMapView(immediate) {
+    const mv = this.mapView;
+    if (!mv) {
+      return;
+    }
+    mv.want = false;
+    if (immediate) {
+      mv.blend = 0;
+      this.finishMapView();
+    }
+  }
+
+  finishMapView() {
+    const mv = this.mapView;
+    if (!mv.engaged) {
+      return;
+    }
+    mv.engaged = false;
+    const camera = this.cameras.main;
+    camera.setZoom(DISPLAY_SCALE);
+    camera.centerOn(this.player.x, this.player.y);
+    camera.setBounds(0, 0, ARENA_WIDTH, ARENA_HEIGHT);
+    camera.startFollow(this.player.sprite, false, 0.1, 0.1);
+    this.applyHudComp();
+  }
+
+  updateMapView(dt) {
+    const mv = this.mapView;
+    const target = mv.want ? 1 : 0;
+    if (mv.blend === target && !mv.engaged) {
+      return;
+    }
+    const camera = this.cameras.main;
+    if (!mv.engaged) {
+      mv.engaged = true;
+      camera.stopFollow();
+      camera.removeBounds();
+    }
+    const step = dt / MAP_VIEW_BLEND_TIME;
+    mv.blend = mv.blend < target ? Math.min(target, mv.blend + step) : Math.max(target, mv.blend - step);
+    const e = mv.blend * mv.blend * (3 - 2 * mv.blend);
+    camera.setZoom(Phaser.Math.Linear(DISPLAY_SCALE, MAP_VIEW_ZOOM, e));
+    camera.centerOn(
+      Phaser.Math.Linear(this.player.x, ARENA_WIDTH / 2, e),
+      Phaser.Math.Linear(this.player.y, ARENA_HEIGHT / 2, e)
+    );
+    if (mv.blend === 0 && !mv.want) {
+      this.finishMapView();
+    }
+  }
+
+  // Con el zoom alejado, el HUD (scrollFactor 0) se achicaría: se compensa posición y escala.
+  applyHudComp() {
+    const k = DISPLAY_SCALE / this.cameras.main.zoom;
+    const active = Math.abs(k - 1) > 0.001;
+    if (!active && !this.hudCompActive) {
+      return;
+    }
+    this.hudCompActive = active;
+    const cx = RENDER_WIDTH / 2;
+    const cy = RENDER_HEIGHT / 2;
+    this.hudFix.forEach((item) => {
+      item.obj.setPosition(cx + (item.x - cx) * k, cy + (item.y - cy) * k);
+      if (item.obj === this.hpBarFill) {
+        item.obj.setScale(item.obj.scaleX * k, k);
+      } else {
+        item.obj.setScale(k);
+      }
+    });
+    this.bossBar.setScale(k);
+  }
+
+  spawnBleachWarning(x, y, radius, duration) {
+    this.hazards.push({ kind: 'warn', x: x, y: y, r: radius, dur: duration, age: 0 });
+  }
+
+  spawnBleachWave(x, y) {
+    this.hazards.push({
+      kind: 'ring',
+      x: x,
+      y: y,
+      r: 30,
+      age: 0,
+      hit: false,
+      offset: Math.random() * Math.PI * 2
+    });
+    this.audio.boss();
+    this.shake('bossDown', true);
+  }
+
+  spawnRainMark(x, y) {
+    this.hazards.push({ kind: 'mark', x: x, y: y, age: 0 });
+  }
+
+  // ¿El ángulo cae en uno de los huecos seguros del anillo?
+  inRingGap(angle, offset, power) {
+    for (let i = 0; i < power.gaps; i++) {
+      const center = offset + (i * Math.PI * 2) / power.gaps;
+      let diff = Math.abs(angle - center) % (Math.PI * 2);
+      if (diff > Math.PI) {
+        diff = Math.PI * 2 - diff;
+      }
+      if (diff < power.gapWidth / 2) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  updateHazards(dt) {
+    const g = this.hazardGfx;
+    g.clear();
+    const bleach = BOSS_POWERS.bleach;
+    const rain = BOSS_POWERS.rain;
+
+    for (let i = this.hazards.length - 1; i >= 0; i--) {
+      const h = this.hazards[i];
+      h.age += dt;
+      let done = false;
+      const dx = this.player.x - h.x;
+      const dy = this.player.y - h.y;
+      const dist = Math.hypot(dx, dy);
+
+      if (h.kind === 'warn') {
+        const pulse = 0.5 + 0.5 * Math.sin(h.age * 14);
+        g.fillStyle(0xffffff, 0.05 + 0.08 * pulse);
+        g.fillCircle(h.x, h.y, h.r);
+        g.lineStyle(6, 0xff5e5e, 0.45 + 0.4 * pulse);
+        g.strokeCircle(h.x, h.y, h.r);
+        done = h.age >= h.dur;
+      } else if (h.kind === 'ring') {
+        h.r += bleach.ringSpeed * dt;
+        const thick = bleach.ringThickness;
+        g.fillStyle(0xe8fbff, 0.85);
+        const step = (thick * 0.4) / h.r;
+        for (let a = 0; a < Math.PI * 2; a += step) {
+          if (!this.inRingGap(a, h.offset, bleach)) {
+            g.fillCircle(h.x + Math.cos(a) * h.r, h.y + Math.sin(a) * h.r, thick / 2);
+          }
+        }
+        if (!h.hit && this.phase === 'playing' && Math.abs(dist - h.r) < thick / 2 + this.player.radius * 0.5) {
+          if (!this.inRingGap(Math.atan2(dy, dx), h.offset, bleach)) {
+            h.hit = true;
+            this.damagePlayer(bleach.damage);
+          }
+        }
+        done = h.r > bleach.radius + thick;
+      } else if (h.kind === 'mark') {
+        const t = Math.min(1, h.age / rain.markTime);
+        g.fillStyle(0x4bcffa, 0.18 + 0.2 * t);
+        g.fillCircle(h.x, h.y, rain.puddleRadius * t);
+        g.lineStyle(4, 0xff9f43, 0.55 + 0.35 * Math.sin(h.age * 18));
+        g.strokeCircle(h.x, h.y, rain.puddleRadius);
+        if (h.age >= rain.markTime) {
+          h.kind = 'puddle';
+          h.age = 0;
+          h.tick = 0;
+          this.audio.hit();
+        }
+      } else if (h.kind === 'puddle') {
+        const fade = Math.min(1, (rain.puddleLife - h.age) / 1);
+        g.fillStyle(0x7fdcff, 0.38 * fade);
+        g.fillCircle(h.x, h.y, rain.puddleRadius);
+        g.lineStyle(3, 0xcff6ff, 0.8 * fade);
+        g.strokeCircle(h.x, h.y, rain.puddleRadius);
+        h.tick -= dt;
+        if (this.phase === 'playing' && dist < rain.puddleRadius + this.player.radius * 0.6 && h.tick <= 0) {
+          h.tick = rain.tickInterval;
+          this.damagePlayer(rain.tickDamage);
+        }
+        done = h.age >= rain.puddleLife;
+      }
+
+      if (done) {
+        this.hazards.splice(i, 1);
+      }
+    }
+  }
+
   // Con un jefe presente (o a punto de aparecer) suena la pista pesada; si no, la de ronda normal.
   updateMusicMode() {
     // En la tienda y en la recompensa del jefe manda la pista de tienda.
@@ -356,6 +563,9 @@ class GameScene extends Phaser.Scene {
 
   clearBattlefield() {
     this.clearPendingSpawns();
+    this.endMapView(true);
+    this.hazards = [];
+    this.hazardGfx.clear();
 
     this.enemies.forEach((enemy) => {
       if (enemy.sprite && enemy.sprite.active) {
@@ -424,6 +634,7 @@ class GameScene extends Phaser.Scene {
   onBossDefeated(enemy) {
     this.bossDefeatedThisWave = true;
     this.defeatedBossName = enemy.name;
+    this.endMapView();
     this.audio.waveEnd();
     this.shake('bossDown', true);
     this.spawnBannerText(enemy.x, enemy.y - 90, '¡' + enemy.name.toUpperCase() + ' DERROTADO!');
@@ -588,6 +799,7 @@ class GameScene extends Phaser.Scene {
   // Muerte: cámara lenta + zoom hacia el personaje antes de mostrar las estadísticas.
   beginDeath() {
     this.phase = 'dying';
+    this.endMapView(true);
     this.deathElapsed = 0;
     this.clearPendingSpawns();
     this.setHudVisible(false);

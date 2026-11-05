@@ -26,6 +26,10 @@ const PLAYER_DEF = {
   spriteHeight: 52
 };
 
+// Vista del mapa completo (poder «Embestida» de Jabonoso Alvo): el zoom que encuadra toda la arena.
+const MAP_VIEW_ZOOM = Math.min(RENDER_WIDTH / ARENA_WIDTH, RENDER_HEIGHT / ARENA_HEIGHT);
+const MAP_VIEW_BLEND_TIME = 0.5;
+
 const SPAWN_TELEGRAPH = 0.55;
 const SPAWN_NEAR_MIN = 170;
 const SPAWN_NEAR_MAX = 380;
