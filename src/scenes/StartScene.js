@@ -6,6 +6,7 @@ class StartScene extends Phaser.Scene {
   create() {
     this.cameras.main.setBackgroundColor(COLORS.bg);
     applyUiCamera(this);
+    Transition.in(this, true);
 
     const cx = GAME_WIDTH / 2;
     const cy = GAME_HEIGHT / 2;
@@ -44,7 +45,8 @@ class StartScene extends Phaser.Scene {
 
     const go = () => {
       AudioManager.init();
-      this.scene.start('IntroScene');
+      AudioManager.uiSelect();
+      Transition.go(this, () => this.scene.start('IntroScene'));
     };
     this.input.keyboard.once('keydown', go);
     this.input.once('pointerdown', go);

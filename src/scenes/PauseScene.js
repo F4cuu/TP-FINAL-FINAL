@@ -37,13 +37,13 @@ class PauseScene extends Phaser.Scene {
         .setOrigin(0.5)
         .setInteractive({ useHandCursor: true });
       item.on('pointerover', () => {
+        if (this.selected !== i) {
+          AudioManager.uiMove();
+        }
         this.selected = i;
         this.refresh();
       });
-      item.on('pointerdown', () => {
-        AudioManager.beep(600, 0.06, 'sine', 0.05);
-        b.action();
-      });
+      item.on('pointerdown', () => b.action());
       this.items.push(item);
     });
 
@@ -52,16 +52,14 @@ class PauseScene extends Phaser.Scene {
 
     this.input.keyboard.on('keydown-UP', () => this.move(-1));
     this.input.keyboard.on('keydown-DOWN', () => this.move(1));
-    this.input.keyboard.on('keydown-ENTER', () => {
-      AudioManager.beep(600, 0.06, 'sine', 0.05);
-      this.buttons[this.selected].action();
-    });
+    this.input.keyboard.on('keydown-ENTER', () => this.buttons[this.selected].action());
     this.input.keyboard.on('keydown-ESC', () => this.resumeGame());
   }
 
   move(delta) {
     this.selected = Phaser.Math.Wrap(this.selected + delta, 0, this.items.length);
     this.refresh();
+    AudioManager.uiMove();
   }
 
   refresh() {
@@ -72,6 +70,7 @@ class PauseScene extends Phaser.Scene {
   }
 
   resumeGame() {
+    AudioManager.uiBack();
     this.scene.resume('GameScene');
     this.scene.stop();
   }
@@ -80,21 +79,29 @@ class PauseScene extends Phaser.Scene {
     AudioManager.enabled = !AudioManager.enabled;
     this.buttons[1].label = 'Efectos: ' + (AudioManager.enabled ? 'ON' : 'OFF');
     this.items[1].setText(this.buttons[1].label);
+    AudioManager.uiToggle(AudioManager.enabled);
   }
 
   toggleMusic() {
     AudioManager.musicEnabled = !AudioManager.musicEnabled;
     this.buttons[2].label = 'Música: ' + (AudioManager.musicEnabled ? 'ON' : 'OFF');
     this.items[2].setText(this.buttons[2].label);
+    AudioManager.uiToggle(AudioManager.musicEnabled);
   }
 
   restartGame() {
-    this.scene.stop('GameScene');
-    this.scene.start('GameScene');
+    AudioManager.uiSelect();
+    Transition.go(this, () => {
+      this.scene.stop('GameScene');
+      this.scene.start('GameScene');
+    });
   }
 
   exitToMenu() {
-    this.scene.stop('GameScene');
-    this.scene.start('MenuScene');
+    AudioManager.uiSelect();
+    Transition.go(this, () => {
+      this.scene.stop('GameScene');
+      this.scene.start('MenuScene');
+    });
   }
 }

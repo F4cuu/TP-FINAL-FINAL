@@ -35,6 +35,7 @@ class GameScene extends Phaser.Scene {
     this.uiBlock = null;
 
     this.cameras.main.setZoom(DISPLAY_SCALE);
+    Transition.in(this);
     this.cameras.main.setBounds(0, 0, ARENA_WIDTH, ARENA_HEIGHT);
     this.cameras.main.setBackgroundColor(COLORS.bg);
 
@@ -287,6 +288,10 @@ class GameScene extends Phaser.Scene {
 
   // Con un jefe presente (o a punto de aparecer) suena la pista pesada; si no, la de ronda normal.
   updateMusicMode() {
+    // En la tienda y en la recompensa del jefe manda la pista de tienda.
+    if (this.phase !== 'playing') {
+      return;
+    }
     const bossPresent =
       this.enemies.some(function (e) {
         return e.isBoss && !e.dead;
@@ -387,6 +392,7 @@ class GameScene extends Phaser.Scene {
 
     if (isBossWave(wave)) {
       this.queueSpawn('boss');
+      this.showNotice('¡' + bossNameForWave(ENEMY_DEFS.boss, wave) + ' se acerca!');
       this.audio.boss();
       this.cameras.main.shake(400, 0.01);
     }
@@ -417,10 +423,11 @@ class GameScene extends Phaser.Scene {
 
   onBossDefeated(enemy) {
     this.bossDefeatedThisWave = true;
+    this.defeatedBossName = enemy.name;
     this.audio.waveEnd();
     this.shake('bossDown', true);
-    this.spawnBannerText(enemy.x, enemy.y - 90, '¡JEFE DERROTADO!');
-    this.showNotice('Jefe derrotado: sobreviví hasta que termine el tiempo para tu recompensa');
+    this.spawnBannerText(enemy.x, enemy.y - 90, '¡' + enemy.name.toUpperCase() + ' DERROTADO!');
+    this.showNotice(enemy.name + ' derrotado: sobreviví hasta que termine el tiempo para tu recompensa');
   }
 
   nextWave() {
@@ -430,8 +437,12 @@ class GameScene extends Phaser.Scene {
 
   showBossReward() {
     this.phase = 'bossReward';
+    this.playShopMusic();
     this.bossRewardOptions = this.buildShopOptions();
-    this.buildOverlay('JEFE DERROTADO', 'Elegí una recompensa gratis (1 / 2 / 3)');
+    this.buildOverlay(
+      (this.defeatedBossName || 'JEFE').toUpperCase() + ' DERROTADO',
+      'Elegí una recompensa gratis (1 / 2 / 3)'
+    );
     this.raiseCoinHud();
     this.buildBossRewardCards();
   }
@@ -718,8 +729,17 @@ class GameScene extends Phaser.Scene {
     }
   }
 
+  // La tienda y la recompensa del jefe comparten pista.
+  playShopMusic() {
+    if (this.musicMode !== 'shop') {
+      this.musicMode = 'shop';
+      this.audio.playMusic('shop');
+    }
+  }
+
   openShop() {
     this.phase = 'shop';
+    this.playShopMusic();
     this.shopRerolls = 0;
     this.shopIndex = 0;
     this.shopOptions = this.buildShopOptions();
@@ -801,6 +821,9 @@ class GameScene extends Phaser.Scene {
         .setInteractive({ useHandCursor: true });
 
       card.on('pointerover', () => {
+        if (this.shopIndex !== i) {
+          this.audio.uiMove();
+        }
         this.shopIndex = i;
         this.refreshShop();
       });
@@ -940,7 +963,7 @@ class GameScene extends Phaser.Scene {
 
   sellWeapon(weaponKey) {
     if (this.player.weapons.length <= 1) {
-      this.audio.beep(180, 0.1, 'sawtooth', 0.05);
+      this.audio.uiDeny();
       return;
     }
     const idx = this.player.weapons.findIndex(function (w) {
@@ -1003,7 +1026,7 @@ class GameScene extends Phaser.Scene {
       return;
     }
     if (this.coins < opt.cost) {
-      this.audio.beep(180, 0.1, 'sawtooth', 0.05);
+      this.audio.uiDeny();
       return;
     }
 
@@ -1048,7 +1071,7 @@ class GameScene extends Phaser.Scene {
   rerollShop() {
     const cost = this.getRerollCost();
     if (this.coins < cost) {
-      this.audio.beep(180, 0.1, 'sawtooth', 0.05);
+      this.audio.uiDeny();
       return;
     }
     this.coins -= cost;
@@ -1104,6 +1127,7 @@ class GameScene extends Phaser.Scene {
   }
 
   closeShop() {
+    this.audio.uiSelect();
     this.clearOverlay();
     this.restoreCoinHud();
     this.nextWave();
@@ -1189,7 +1213,10 @@ class GameScene extends Phaser.Scene {
         .toHud()
         .setDepth(DEPTH.overlay + 2)
         .setInteractive({ useHandCursor: true })
-        .on('pointerdown', () => b.action());
+        .on('pointerdown', () => {
+          this.audio.uiSelect();
+          b.action();
+        });
       this.overlayButtons.push(btn);
     });
   }
@@ -1591,7 +1618,7 @@ class GameScene extends Phaser.Scene {
       this.bossBar.setVisible(true);
       this.bossBar.setPosition(boss.sprite.x, boss.sprite.y - boss.sprite.displayHeight / 2 - 24);
       this.bossBarFill.setScale(bossRatio, 1);
-      this.bossBarText.setText('JEFE  ' + Math.ceil(boss.hp) + ' / ' + boss.maxHp);
+      this.bossBarText.setText(boss.name.toUpperCase() + '  ' + Math.ceil(boss.hp) + ' / ' + boss.maxHp);
     } else {
       this.bossBar.setVisible(false);
     }

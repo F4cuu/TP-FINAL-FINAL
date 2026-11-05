@@ -13,6 +13,7 @@ class IntroScene extends Phaser.Scene {
   create() {
     this.cameras.main.setBackgroundColor(COLORS.bg);
     applyUiCamera(this);
+    Transition.in(this);
     this.text = this.add
       .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, '', {
         fontFamily: FONT_FAMILY,
@@ -35,7 +36,10 @@ class IntroScene extends Phaser.Scene {
 
     this.advance();
 
-    const go = () => this.advance();
+    const go = () => {
+      AudioManager.uiMove();
+      this.advance();
+    };
     this.input.keyboard.on('keydown', go);
     this.input.on('pointerdown', go);
   }
@@ -43,7 +47,7 @@ class IntroScene extends Phaser.Scene {
   advance() {
     this.index += 1;
     if (this.index >= this.panels.length) {
-      this.scene.start('MenuScene');
+      Transition.go(this, () => this.scene.start('MenuScene'));
       return;
     }
     this.text.setText(this.panels[this.index]).setAlpha(0);
