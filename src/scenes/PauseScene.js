@@ -20,7 +20,8 @@ class PauseScene extends Phaser.Scene {
 
     this.buttons = [
       { label: 'Continuar', action: () => this.resumeGame() },
-      { label: 'Sonido: ' + (AudioManager.enabled ? 'ON' : 'OFF'), action: () => this.toggleSound() },
+      { label: 'Efectos: ' + (AudioManager.enabled ? 'ON' : 'OFF'), action: () => this.toggleSound() },
+      { label: 'Música: ' + (AudioManager.musicEnabled ? 'ON' : 'OFF'), action: () => this.toggleMusic() },
       { label: 'Reiniciar', action: () => this.restartGame() },
       { label: 'Salir al menu', action: () => this.exitToMenu() }
     ];
@@ -28,7 +29,7 @@ class PauseScene extends Phaser.Scene {
     this.items = [];
     this.buttons.forEach((b, i) => {
       const item = this.add
-        .text(GAME_WIDTH / 2, 260 + i * 70, b.label, {
+        .text(GAME_WIDTH / 2, 250 + i * 64, b.label, {
           fontFamily: FONT_FAMILY,
           fontSize: '30px',
           color: COLORS.text
@@ -77,8 +78,14 @@ class PauseScene extends Phaser.Scene {
 
   toggleSound() {
     AudioManager.enabled = !AudioManager.enabled;
-    this.buttons[1].label = 'Sonido: ' + (AudioManager.enabled ? 'ON' : 'OFF');
+    this.buttons[1].label = 'Efectos: ' + (AudioManager.enabled ? 'ON' : 'OFF');
     this.items[1].setText(this.buttons[1].label);
+  }
+
+  toggleMusic() {
+    AudioManager.musicEnabled = !AudioManager.musicEnabled;
+    this.buttons[2].label = 'Música: ' + (AudioManager.musicEnabled ? 'ON' : 'OFF');
+    this.items[2].setText(this.buttons[2].label);
   }
 
   restartGame() {

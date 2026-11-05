@@ -15,24 +15,25 @@ class OptionsScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    this.statusText = this.add
-      .text(GAME_WIDTH / 2, 280, '', {
-        fontFamily: FONT_FAMILY,
-        fontSize: '28px',
-        color: COLORS.text
-      })
-      .setOrigin(0.5);
-
-    this.toggleText = this.add
-      .text(GAME_WIDTH / 2, 360, '[ Sonido: ON ]', {
+    this.sfxText = this.add
+      .text(GAME_WIDTH / 2, 290, '', {
         fontFamily: FONT_FAMILY,
         fontSize: '28px',
         color: '#9be15d'
       })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
+    this.sfxText.on('pointerdown', () => this.toggleSfx());
 
-    this.toggleText.on('pointerdown', () => this.toggleSound());
+    this.musicText = this.add
+      .text(GAME_WIDTH / 2, 360, '', {
+        fontFamily: FONT_FAMILY,
+        fontSize: '28px',
+        color: '#9be15d'
+      })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
+    this.musicText.on('pointerdown', () => this.toggleMusic());
 
     this.add
       .text(GAME_WIDTH / 2, 470, '[ Volver ]', {
@@ -49,7 +50,8 @@ class OptionsScene extends Phaser.Scene {
     this.input.keyboard.on('keydown-ESC', () => this.scene.start('MenuScene'));
   }
 
-  toggleSound() {
+  // Efectos de sonido: disparos, impactos, tienda, etc.
+  toggleSfx() {
     AudioManager.enabled = !AudioManager.enabled;
     if (AudioManager.enabled) {
       AudioManager.init();
@@ -58,8 +60,16 @@ class OptionsScene extends Phaser.Scene {
     this.refresh();
   }
 
+  // Música de fondo (independiente de los efectos).
+  toggleMusic() {
+    AudioManager.musicEnabled = !AudioManager.musicEnabled;
+    this.refresh();
+  }
+
   refresh() {
-    this.toggleText.setText('[ Sonido: ' + (AudioManager.enabled ? 'ON' : 'OFF') + ' ]');
-    this.toggleText.setColor(AudioManager.enabled ? '#9be15d' : '#eb3b5a');
+    this.sfxText.setText('[ Efectos de sonido: ' + (AudioManager.enabled ? 'ON' : 'OFF') + ' ]');
+    this.sfxText.setColor(AudioManager.enabled ? '#9be15d' : '#eb3b5a');
+    this.musicText.setText('[ Música: ' + (AudioManager.musicEnabled ? 'ON' : 'OFF') + ' ]');
+    this.musicText.setColor(AudioManager.musicEnabled ? '#9be15d' : '#eb3b5a');
   }
 }

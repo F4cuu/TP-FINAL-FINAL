@@ -26,7 +26,8 @@ class GameScene extends Phaser.Scene {
     this.tweens.timeScale = 1;
     this.time.timeScale = 1;
     this.audio.setMusicTempo(1);
-    this.audio.startMusic();
+    this.musicMode = 'battle';
+    this.audio.playMusic('battle');
 
     this.enemies = [];
     this.projectiles = [];
@@ -113,6 +114,7 @@ class GameScene extends Phaser.Scene {
     this.updateProjectiles(dt);
     this.updateSpawnMarkers(dt);
     this.updateWave(dt);
+    this.updateMusicMode();
     this.updateHUD();
 
     if (this.player.hp <= 0) {
@@ -280,6 +282,22 @@ class GameScene extends Phaser.Scene {
 
     if (this.waveTimeLeft <= 0) {
       this.endWave();
+    }
+  }
+
+  // Con un jefe presente (o a punto de aparecer) suena la pista pesada; si no, la de ronda normal.
+  updateMusicMode() {
+    const bossPresent =
+      this.enemies.some(function (e) {
+        return e.isBoss && !e.dead;
+      }) ||
+      this.pendingSpawns.some(function (ps) {
+        return ps.type === 'boss';
+      });
+    const mode = bossPresent ? 'boss' : 'battle';
+    if (mode !== this.musicMode) {
+      this.musicMode = mode;
+      this.audio.playMusic(mode);
     }
   }
 
