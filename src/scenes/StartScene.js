@@ -5,6 +5,7 @@ class StartScene extends Phaser.Scene {
 
   create() {
     this.cameras.main.setBackgroundColor(COLORS.bg);
+    applyUiCamera(this);
 
     const cx = GAME_WIDTH / 2;
     const cy = GAME_HEIGHT / 2;

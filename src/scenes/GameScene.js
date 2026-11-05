@@ -20,12 +20,20 @@ class GameScene extends Phaser.Scene {
     this.totalTime = 0;
     this.runTime = 0;
     this.nextSpawnId = 1;
+    this.bossDefeatedThisWave = false;
+    this.deathElapsed = 0;
+    this.lastHitShake = 0;
+    this.tweens.timeScale = 1;
+    this.time.timeScale = 1;
+    this.audio.setMusicTempo(1);
+    this.audio.startMusic();
 
     this.enemies = [];
     this.projectiles = [];
     this.pendingSpawns = [];
     this.uiBlock = null;
 
+    this.cameras.main.setZoom(DISPLAY_SCALE);
     this.cameras.main.setBounds(0, 0, ARENA_WIDTH, ARENA_HEIGHT);
     this.cameras.main.setBackgroundColor(COLORS.bg);
 
@@ -48,7 +56,7 @@ class GameScene extends Phaser.Scene {
     this.player = new Player(this, ARENA_WIDTH / 2, ARENA_HEIGHT / 2);
     this.player.weapons.push(new Weapon(WEAPON_DEFS.toxin));
 
-    this.cameras.main.startFollow(this.player.sprite, true, 0.1, 0.1);
+    this.cameras.main.startFollow(this.player.sprite, false, 0.1, 0.1);
 
     this.cursors = this.input.keyboard.createCursorKeys();
     this.wasd = this.input.keyboard.addKeys({ up: 'W', down: 'S', left: 'A', right: 'D' });
@@ -82,6 +90,10 @@ class GameScene extends Phaser.Scene {
 
   update(time, delta) {
     const dt = delta / 1000;
+    if (this.phase === 'dying') {
+      this.updateDeath(dt);
+      return;
+    }
     if (this.phase === 'playing' || this.phase === 'shop' || this.phase === 'bossReward') {
       this.runTime += dt;
     }
@@ -104,7 +116,7 @@ class GameScene extends Phaser.Scene {
     this.updateHUD();
 
     if (this.player.hp <= 0) {
-      this.gameOver();
+      this.beginDeath();
     }
   }
 
@@ -132,11 +144,15 @@ class GameScene extends Phaser.Scene {
       const dx = enemy.x - this.player.x;
       const dy = enemy.y - this.player.y;
       const d = Math.hypot(dx, dy);
-      if (d < enemy.radius + this.player.radius && enemy.contactTimer <= 0) {
+      if (
+        this.phase === 'playing' &&
+        d < enemy.radius + this.player.radius &&
+        enemy.contactTimer <= 0
+      ) {
         enemy.contactTimer = 0.6;
         this.player.takeDamage(enemy.damage);
         this.audio.hurt();
-        this.cameras.main.shake(120, 0.006);
+        this.shake('hurt', true);
       }
     }
   }
@@ -161,7 +177,7 @@ class GameScene extends Phaser.Scene {
   explodeProjectile(projectile, x, y) {
     projectile.exploded = true;
     this.audio.hit();
-    this.cameras.main.shake(160, 0.008);
+    this.shake('explosion', true);
     this.applyAoe(
       x,
       y,
@@ -197,6 +213,7 @@ class GameScene extends Phaser.Scene {
         }
         projectile.hitIds.push(enemy.id);
         this.audio.hit();
+        this.shake('hit');
         this.registerWeaponDamage(
           projectile.weaponKey,
           Math.min(projectile.damage, Math.max(0, enemy.hp))
@@ -230,7 +247,7 @@ class GameScene extends Phaser.Scene {
     this.spawnCoin(enemy.x, enemy.y, gain);
 
     if (enemy.isBoss && this.phase === 'playing') {
-      this.showBossReward();
+      this.onBossDefeated(enemy);
     }
 
     const sprite = enemy.sprite;
@@ -343,6 +360,7 @@ class GameScene extends Phaser.Scene {
 
   startWave(wave) {
     this.resetArenaForWave();
+    this.bossDefeatedThisWave = false;
     this.wave = wave;
     this.waveTimeLeft = Math.min(20 + 4 * (wave - 1), 50);
     this.spawnQueue = buildSpawnQueue(wave);
@@ -360,12 +378,31 @@ class GameScene extends Phaser.Scene {
     this.audio.waveEnd();
     this.clearBattlefield();
 
+    // La recompensa del jefe se entrega al terminar el tiempo de la oleada.
+    if (this.bossDefeatedThisWave) {
+      this.bossDefeatedThisWave = false;
+      this.showBossReward();
+      return;
+    }
+
+    this.afterWave();
+  }
+
+  afterWave() {
     if (!this.infinite && this.wave >= TOTAL_WAVES) {
       this.showVictory();
       return;
     }
 
     this.openShop();
+  }
+
+  onBossDefeated(enemy) {
+    this.bossDefeatedThisWave = true;
+    this.audio.waveEnd();
+    this.shake('bossDown', true);
+    this.spawnBannerText(enemy.x, enemy.y - 90, '¡JEFE DERROTADO!');
+    this.showNotice('Jefe derrotado: sobreviví hasta que termine el tiempo para tu recompensa');
   }
 
   nextWave() {
@@ -390,7 +427,7 @@ class GameScene extends Phaser.Scene {
       const card = this.add
         .rectangle(x, y, 300, 230, 0x1d2a54, 0.95)
         .setStrokeStyle(3, 0x9be15d, 1)
-        .setScrollFactor(0)
+        .toHud()
         .setDepth(DEPTH.overlay + 1)
         .setInteractive({ useHandCursor: true })
         .on('pointerdown', () => this.chooseBossReward(i));
@@ -404,7 +441,7 @@ class GameScene extends Phaser.Scene {
           wordWrap: { width: 270 }
         })
         .setOrigin(0.5)
-        .setScrollFactor(0)
+        .toHud()
         .setDepth(DEPTH.overlay + 2);
 
       const desc = this.add
@@ -416,7 +453,7 @@ class GameScene extends Phaser.Scene {
           wordWrap: { width: 270 }
         })
         .setOrigin(0.5)
-        .setScrollFactor(0)
+        .toHud()
         .setDepth(DEPTH.overlay + 2);
 
       const cost = this.add
@@ -426,7 +463,7 @@ class GameScene extends Phaser.Scene {
           color: '#9be15d'
         })
         .setOrigin(0.5)
-        .setScrollFactor(0)
+        .toHud()
         .setDepth(DEPTH.overlay + 2);
 
       this.overlay.push(card, title, desc, cost);
@@ -462,7 +499,7 @@ class GameScene extends Phaser.Scene {
     this.audio.buy();
     this.clearOverlay();
     this.restoreCoinHud();
-    this.endWave();
+    this.afterWave();
   }
 
   buildRunStats() {
@@ -519,24 +556,118 @@ class GameScene extends Phaser.Scene {
     };
   }
 
-  gameOver() {
-    this.phase = 'gameover';
+  // Muerte: cámara lenta + zoom hacia el personaje antes de mostrar las estadísticas.
+  beginDeath() {
+    this.phase = 'dying';
+    this.deathElapsed = 0;
+    this.clearPendingSpawns();
+    this.setHudVisible(false);
     this.audio.gameOver();
+    this.audio.fadeMusic(DEATH.duration);
+
+    const camera = this.cameras.main;
+    camera.removeBounds();
+    camera.flash(220, 255, 70, 70);
+    this.deathStartZoom = camera.zoom;
+    this.deathDir = this.player.sprite.flipX ? -1 : 1;
+    this.player.sprite.setTint(0xff5555);
+    this.shake('hurt', true);
+    this.spawnDeathBurst(this.player.x, this.player.y);
+  }
+
+  updateDeath(realDt) {
+    this.deathElapsed += realDt;
+    const elapsed = this.deathElapsed;
+
+    const ramp = Phaser.Math.Clamp(elapsed / DEATH.rampTime, 0, 1);
+    const slow = Phaser.Math.Linear(1, DEATH.minTimeScale, ramp * ramp * (3 - 2 * ramp));
+    this.tweens.timeScale = slow;
+    this.time.timeScale = slow;
+    this.audio.setMusicTempo(slow);
+
+    const dt = realDt * slow;
+    this.updateEnemies(dt);
+    this.updateProjectiles(dt);
+
+    const t = Math.min(1, elapsed / DEATH.duration);
+    const ease = t * t * (3 - 2 * t);
+    this.cameras.main.setZoom(
+      Phaser.Math.Linear(this.deathStartZoom, this.deathStartZoom * DEATH.zoomMultiplier, ease)
+    );
+
+    const sprite = this.player.sprite;
+    const shrink = this.player.baseScale * (1 - 0.3 * ease);
+    sprite.setScale(shrink, shrink);
+    sprite.setAngle(this.deathDir * 80 * ease);
+    sprite.setAlpha(1 - 0.45 * ease);
+
+    if (elapsed >= DEATH.duration) {
+      this.finishRun(false);
+    }
+  }
+
+  spawnDeathBurst(x, y) {
+    for (let i = 0; i < 16; i++) {
+      const angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
+      const distance = Phaser.Math.Between(50, 140);
+      const size = Phaser.Math.FloatBetween(0.5, 1.1);
+      const p = this.add.image(x, y, 'particle').setDepth(DEPTH.effect);
+      p.setTint(i % 3 === 0 ? 0xff5555 : COLORS.player).setScale(size);
+      this.tweens.add({
+        targets: p,
+        x: x + Math.cos(angle) * distance,
+        y: y + Math.sin(angle) * distance,
+        scale: size * 0.2,
+        alpha: 0,
+        duration: Phaser.Math.Between(700, 1200),
+        ease: 'Quad.easeOut',
+        onComplete: () => p.destroy()
+      });
+    }
+  }
+
+  // Cierra la partida (derrota o victoria) y muestra las estadísticas sobre la partida detenida.
+  finishRun(victory) {
     const stats = this.buildRunStats();
+    const time = Math.floor(this.totalTime);
     const records = ScoreStore.save({
       coins: this.coins,
       wave: this.wave,
-      time: Math.floor(this.totalTime),
+      time: time,
       kills: this.kills
     });
-    this.scene.start('GameOverScene', {
-      victory: false,
+    this.clearOverlay();
+    this.setHudVisible(false);
+    this.phase = 'finished';
+    this.scene.launch('GameOverScene', {
+      victory: victory,
       coins: this.coins,
       wave: this.wave,
-      time: Math.floor(this.totalTime),
+      time: time,
       kills: this.kills,
       records: records,
       stats: stats
+    });
+    this.scene.pause();
+  }
+
+  setHudVisible(visible) {
+    [
+      this.hpBarBg,
+      this.hpBarFill,
+      this.hpText,
+      this.waveText,
+      this.timerText,
+      this.coinPanel,
+      this.coinText,
+      this.weaponText,
+      this.vignette,
+      this.noticeText,
+      this.bossBar
+    ].forEach(function (obj) {
+      if (obj) {
+        obj.setVisible(visible);
+      }
     });
   }
 
@@ -552,22 +683,7 @@ class GameScene extends Phaser.Scene {
   }
 
   finishVictory() {
-    const stats = this.buildRunStats();
-    const records = ScoreStore.save({
-      coins: this.coins,
-      wave: this.wave,
-      time: Math.floor(this.totalTime),
-      kills: this.kills
-    });
-    this.scene.start('GameOverScene', {
-      victory: true,
-      coins: this.coins,
-      wave: this.wave,
-      time: Math.floor(this.totalTime),
-      kills: this.kills,
-      records: records,
-      stats: stats
-    });
+    this.finishRun(true);
   }
 
   enterInfinite() {
@@ -662,7 +778,7 @@ class GameScene extends Phaser.Scene {
       const card = this.add
         .rectangle(x, y, 300, 230, 0x1d2a54, 0.95)
         .setStrokeStyle(3, 0x3a5bd0, 1)
-        .setScrollFactor(0)
+        .toHud()
         .setDepth(DEPTH.overlay + 1)
         .setInteractive({ useHandCursor: true });
 
@@ -681,7 +797,7 @@ class GameScene extends Phaser.Scene {
           wordWrap: { width: 270 }
         })
         .setOrigin(0.5)
-        .setScrollFactor(0)
+        .toHud()
         .setDepth(DEPTH.overlay + 2);
 
       const desc = this.add
@@ -693,7 +809,7 @@ class GameScene extends Phaser.Scene {
           wordWrap: { width: 270 }
         })
         .setOrigin(0.5)
-        .setScrollFactor(0)
+        .toHud()
         .setDepth(DEPTH.overlay + 2);
 
       const cost = this.add
@@ -703,7 +819,7 @@ class GameScene extends Phaser.Scene {
           color: '#9be15d'
         })
         .setOrigin(0.5)
-        .setScrollFactor(0)
+        .toHud()
         .setDepth(DEPTH.overlay + 2);
 
       this.shopCards.push({ card, title, desc, cost });
@@ -720,7 +836,7 @@ class GameScene extends Phaser.Scene {
         color: '#9be15d'
       })
       .setOrigin(0.5)
-      .setScrollFactor(0)
+      .toHud()
       .setDepth(DEPTH.overlay + 2)
       .setInteractive({ useHandCursor: true })
       .on('pointerdown', () => this.rerollShop());
@@ -732,7 +848,7 @@ class GameScene extends Phaser.Scene {
         color: '#9be15d'
       })
       .setOrigin(0.5)
-      .setScrollFactor(0)
+      .toHud()
       .setDepth(DEPTH.overlay + 2)
       .setInteractive({ useHandCursor: true })
       .on('pointerdown', () => this.closeShop());
@@ -744,7 +860,7 @@ class GameScene extends Phaser.Scene {
         color: COLORS.textDim
       })
       .setOrigin(0.5)
-      .setScrollFactor(0)
+      .toHud()
       .setDepth(DEPTH.overlay + 2);
 
     this.shopButtons = [this.rerollBtn, this.continueBtn, this.shopHint];
@@ -760,7 +876,7 @@ class GameScene extends Phaser.Scene {
         color: COLORS.text
       })
       .setOrigin(0, 0.5)
-      .setScrollFactor(0)
+      .toHud()
       .setDepth(DEPTH.overlay + 2);
 
     this.sellChips = [];
@@ -774,7 +890,7 @@ class GameScene extends Phaser.Scene {
             color: COLORS.textDim
           })
           .setOrigin(0, 0.5)
-          .setScrollFactor(0)
+          .toHud()
           .setDepth(DEPTH.overlay + 2)
       );
       return;
@@ -794,7 +910,7 @@ class GameScene extends Phaser.Scene {
           }
         )
         .setOrigin(0, 0.5)
-        .setScrollFactor(0)
+        .toHud()
         .setDepth(DEPTH.overlay + 3)
         .setInteractive({ useHandCursor: true })
         .on('pointerover', () => chip.setColor('#ff9f43'))
@@ -940,7 +1056,7 @@ class GameScene extends Phaser.Scene {
           color: COLORS.text
         })
         .setOrigin(0.5)
-        .setScrollFactor(0)
+        .toHud()
         .setDepth(DEPTH.overlay + 6)
         .setInteractive({ useHandCursor: true })
         .on('pointerdown', () => this.resolveWeaponChoice(i === 1 ? 'annex' : 'equip'));
@@ -1016,7 +1132,7 @@ class GameScene extends Phaser.Scene {
     this.overlay.push(
       this.add
         .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x05070f, 0.8)
-        .setScrollFactor(0)
+        .toHud()
         .setDepth(DEPTH.overlay)
     );
     this.overlay.push(
@@ -1027,7 +1143,7 @@ class GameScene extends Phaser.Scene {
           color: '#e8f0ff'
         })
         .setOrigin(0.5)
-        .setScrollFactor(0)
+        .toHud()
         .setDepth(DEPTH.overlay + 1)
     );
     this.overlayTitle = this.add
@@ -1037,7 +1153,7 @@ class GameScene extends Phaser.Scene {
         color: COLORS.textDim
       })
       .setOrigin(0.5)
-      .setScrollFactor(0)
+      .toHud()
       .setDepth(DEPTH.overlay + 1);
     this.overlay.push(this.overlayTitle);
   }
@@ -1052,7 +1168,7 @@ class GameScene extends Phaser.Scene {
           color: COLORS.text
         })
         .setOrigin(0.5)
-        .setScrollFactor(0)
+        .toHud()
         .setDepth(DEPTH.overlay + 2)
         .setInteractive({ useHandCursor: true })
         .on('pointerdown', () => b.action());
@@ -1131,6 +1247,72 @@ class GameScene extends Phaser.Scene {
         }
       }
     }
+  }
+
+  // Vibración breve de cámara. `force` interrumpe una vibración en curso.
+  shake(kind, force) {
+    const preset = SHAKE[kind];
+    if (!preset) {
+      return;
+    }
+    if (kind === 'hit') {
+      const now = performance.now();
+      if (now - this.lastHitShake < 90) {
+        return;
+      }
+      this.lastHitShake = now;
+    }
+    this.cameras.main.shake(preset.duration, preset.intensity, !!force);
+  }
+
+  // Polvo que levanta el personaje al moverse (dirX/dirY: dirección normalizada de avance).
+  spawnDust(x, y, dirX, dirY) {
+    for (let i = 0; i < 2; i++) {
+      const size = Phaser.Math.FloatBetween(0.35, 0.7);
+      const puff = this.add
+        .image(x + Phaser.Math.Between(-7, 7), y + Phaser.Math.Between(-3, 3), 'particle')
+        .setDepth(DEPTH.player - 1)
+        .setTint(0xd8d2c0)
+        .setAlpha(0.45)
+        .setScale(size);
+      this.tweens.add({
+        targets: puff,
+        x: puff.x - dirX * Phaser.Math.Between(14, 30) + Phaser.Math.Between(-8, 8),
+        y: puff.y - dirY * Phaser.Math.Between(14, 30) - Phaser.Math.Between(4, 12),
+        scale: size * Phaser.Math.FloatBetween(1.8, 2.6),
+        alpha: 0,
+        duration: Phaser.Math.Between(350, 550),
+        ease: 'Quad.easeOut',
+        onComplete: () => puff.destroy()
+      });
+    }
+  }
+
+  spawnBannerText(x, y, message) {
+    const text = this.add
+      .text(x, y, message, {
+        fontFamily: FONT_FAMILY,
+        fontSize: '30px',
+        color: '#ffd166'
+      })
+      .setOrigin(0.5)
+      .setDepth(DEPTH.damageText);
+    text.setShadow(0, 3, '#000000', 6, true, true);
+    this.tweens.add({
+      targets: text,
+      y: y - 60,
+      alpha: 0,
+      duration: 1800,
+      ease: 'Quad.easeIn',
+      onComplete: () => text.destroy()
+    });
+  }
+
+  // Aviso temporal en el HUD.
+  showNotice(message) {
+    this.tweens.killTweensOf(this.noticeText);
+    this.noticeText.setText(message).setAlpha(1);
+    this.tweens.add({ targets: this.noticeText, alpha: 0, delay: 3000, duration: 600 });
   }
 
   spawnTrail(x, y, color) {
@@ -1265,12 +1447,12 @@ class GameScene extends Phaser.Scene {
       .rectangle(24, 24, 304, 28, 0x000000, 0.5)
       .setOrigin(0)
       .setStrokeStyle(2, 0x3a5bd0, 1)
-      .setScrollFactor(0)
+      .toHud()
       .setDepth(DEPTH.hud);
     this.hpBarFill = this.add
       .rectangle(26, 26, 300, 24, 0x39d353)
       .setOrigin(0)
-      .setScrollFactor(0)
+      .toHud()
       .setDepth(DEPTH.hud);
     this.hpText = this.add
       .text(176, 38, 'HP', {
@@ -1279,7 +1461,7 @@ class GameScene extends Phaser.Scene {
         color: '#0b1026'
       })
       .setOrigin(0.5)
-      .setScrollFactor(0)
+      .toHud()
       .setDepth(DEPTH.hud + 1);
 
     this.waveText = this.add
@@ -1289,7 +1471,7 @@ class GameScene extends Phaser.Scene {
         color: '#e8f0ff'
       })
       .setOrigin(0.5, 0)
-      .setScrollFactor(0)
+      .toHud()
       .setDepth(DEPTH.hud);
     this.timerText = this.add
       .text(GAME_WIDTH / 2, 60, '', {
@@ -1298,14 +1480,14 @@ class GameScene extends Phaser.Scene {
         color: COLORS.textDim
       })
       .setOrigin(0.5, 0)
-      .setScrollFactor(0)
+      .toHud()
       .setDepth(DEPTH.hud);
 
     this.coinPanel = this.add
       .rectangle(24, 58, 196, 34, 0x000000, 0.5)
       .setOrigin(0)
       .setStrokeStyle(2, 0x3a5bd0, 1)
-      .setScrollFactor(0)
+      .toHud()
       .setDepth(DEPTH.hud);
 
     this.coinText = this.add
@@ -1315,7 +1497,7 @@ class GameScene extends Phaser.Scene {
         color: '#9be15d'
       })
       .setOrigin(0, 0.5)
-      .setScrollFactor(0)
+      .toHud()
       .setDepth(DEPTH.hud + 1);
 
     this.weaponText = this.add
@@ -1325,13 +1507,24 @@ class GameScene extends Phaser.Scene {
         color: COLORS.text
       })
       .setOrigin(0, 1)
-      .setScrollFactor(0)
+      .toHud()
       .setDepth(DEPTH.hud);
+
+    this.noticeText = this.add
+      .text(GAME_WIDTH / 2, 112, '', {
+        fontFamily: FONT_FAMILY,
+        fontSize: '22px',
+        color: '#ffd166'
+      })
+      .setOrigin(0.5, 0)
+      .toHud()
+      .setDepth(DEPTH.hud)
+      .setAlpha(0);
 
     this.vignette = this.add
       .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0)
       .setStrokeStyle(26, 0xeb3b5a, 1)
-      .setScrollFactor(0)
+      .toHud()
       .setDepth(DEPTH.hud + 2)
       .setAlpha(0);
   }

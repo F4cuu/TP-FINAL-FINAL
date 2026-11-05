@@ -1,8 +1,8 @@
 const gameConfig = {
   type: Phaser.AUTO,
   parent: 'game',
-  width: GAME_WIDTH,
-  height: GAME_HEIGHT,
+  width: RENDER_WIDTH,
+  height: RENDER_HEIGHT,
   backgroundColor: '#0b1026',
   render: {
     pixelArt: false,

@@ -5,6 +5,8 @@ class MenuScene extends Phaser.Scene {
 
   create() {
     this.cameras.main.setBackgroundColor(COLORS.bg);
+    applyUiCamera(this);
+    AudioManager.startMusic();
     this.createDecorations();
     this.createTitle();
     this.createRecords();

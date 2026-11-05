@@ -28,7 +28,9 @@ class GameOverScene extends Phaser.Scene {
   }
 
   create() {
-    this.cameras.main.setBackgroundColor(COLORS.bg);
+    // Sin color de fondo: se ve la partida detenida de GameScene por detrás.
+    applyUiCamera(this);
+    this.buildBackdrop();
     const d = this.result;
     const stats = d.stats || {};
     const byType = stats.killsByType || {};
@@ -166,8 +168,8 @@ class GameOverScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.buttons = [
-      { label: 'Reintentar', action: () => this.scene.start('GameScene') },
-      { label: 'Menu principal', action: () => this.scene.start('MenuScene') }
+      { label: 'Reintentar', action: () => this.leaveTo('GameScene') },
+      { label: 'Menu principal', action: () => this.leaveTo('MenuScene') }
     ];
 
     this.items = [];
@@ -194,6 +196,29 @@ class GameOverScene extends Phaser.Scene {
     this.input.keyboard.on('keydown-UP', () => this.move(-1));
     this.input.keyboard.on('keydown-DOWN', () => this.move(1));
     this.input.keyboard.on('keydown-ENTER', () => this.buttons[this.selected].action());
+  }
+
+  // Atenúa la partida detenida y le da un panel a cada columna de estadísticas.
+  buildBackdrop() {
+    const dim = this.add
+      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x05070f, 0.72)
+      .setAlpha(0);
+
+    const panels = this.add.graphics();
+    panels.fillStyle(0x0b1026, 0.7);
+    panels.fillRoundedRect(46, 124, 610, 362, 16);
+    panels.fillRoundedRect(666, 124, 568, 362, 16);
+    panels.lineStyle(2, 0x3a5bd0, 0.7);
+    panels.strokeRoundedRect(46, 124, 610, 362, 16);
+    panels.strokeRoundedRect(666, 124, 568, 362, 16);
+    panels.setAlpha(0);
+
+    this.tweens.add({ targets: [dim, panels], alpha: 1, duration: 600 });
+  }
+
+  leaveTo(sceneKey) {
+    this.scene.stop('GameScene');
+    this.scene.start(sceneKey);
   }
 
   move(delta) {

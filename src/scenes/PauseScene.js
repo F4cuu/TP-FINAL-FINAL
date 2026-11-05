@@ -4,9 +4,11 @@ class PauseScene extends Phaser.Scene {
   }
 
   create() {
-    this.add
-      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x05070f, 0.75)
-      .setScrollFactor(0);
+    applyUiCamera(this);
+    AudioManager.duckMusic(true);
+    this.events.once('shutdown', () => AudioManager.duckMusic(false));
+
+    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x05070f, 0.75);
 
     this.add
       .text(GAME_WIDTH / 2, 140, 'PAUSA', {
