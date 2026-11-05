@@ -21,9 +21,12 @@ class Enemy {
     this.blinkTimer = 0;
 
     this.state = 'chase';
-    this.abilityTimer = this.isBoss ? 10 : Infinity;
-    this.chargeTarget = null;
-    this.chargeTimer = 0;
+    this.power = this.isBoss ? bossPowerForWave(scene.wave) : null;
+    this.abilityTimer = this.isBoss ? BOSS_POWERS[this.power].cooldown : Infinity;
+    this.stateTimer = 0;
+    this.noContact = false;
+    this.hoverScale = 1;
+    this.hoverTarget = 1;
 
     const texture = (def.texturesByWave && def.texturesByWave[scene.wave]) || def.texture;
     this.sprite = scene.add.image(x, y, texture).setDepth(DEPTH.enemy);
@@ -34,36 +37,15 @@ class Enemy {
   }
 
   update(dt, player, enemies) {
-    if (this.isBoss) {
-      this.updateBoss(dt, player);
-    }
+    const moved = this.isBoss ? this.updateBoss(dt, player) : false;
 
     const previousX = this.sprite.x;
-    let dirX = player.x - this.sprite.x;
-    let dirY = player.y - this.sprite.y;
-    const dist = Math.hypot(dirX, dirY) || 1;
-    dirX /= dist;
-    dirY /= dist;
-
-    if (this.state === 'telegraph') {
-      this.chargeTimer -= dt;
-      if (this.chargeTimer <= 0) {
-        this.state = 'charge';
-        this.chargeTimer = 0.7;
-      }
-    } else if (this.state === 'charge') {
-      this.chargeTimer -= dt;
-      const cx = this.chargeTarget.x - this.sprite.x;
-      const cy = this.chargeTarget.y - this.sprite.y;
-      const cl = Math.hypot(cx, cy) || 1;
-      const chargeSpeed = this.speed * 2;
-      this.sprite.x += (cx / cl) * chargeSpeed * dt;
-      this.sprite.y += (cy / cl) * chargeSpeed * dt;
-      if (this.chargeTimer <= 0) {
-        this.state = 'chase';
-        this.abilityTimer = 10;
-      }
-    } else {
+    if (!moved) {
+      let dirX = player.x - this.sprite.x;
+      let dirY = player.y - this.sprite.y;
+      const dist = Math.hypot(dirX, dirY) || 1;
+      dirX /= dist;
+      dirY /= dist;
       this.sprite.x += dirX * this.speed * dt;
       this.sprite.y += dirY * this.speed * dt;
     }
@@ -78,9 +60,13 @@ class Enemy {
 
     this.separate(enemies);
 
+    this.hoverScale += (this.hoverTarget - this.hoverScale) * Math.min(1, dt * 6);
     this.breath += dt * 4;
     const b = Math.sin(this.breath);
-    this.sprite.setScale(this.baseScale * (1 + b * 0.05), this.baseScale * (1 + b * 0.08));
+    this.sprite.setScale(
+      this.baseScale * this.hoverScale * (1 + b * 0.05),
+      this.baseScale * this.hoverScale * (1 + b * 0.08)
+    );
 
     this.trailTimer -= dt;
     if (this.trailTimer <= 0) {
@@ -92,22 +78,158 @@ class Enemy {
     if (this.blinkTimer > 0) {
       this.blinkTimer -= dt;
       if (this.blinkTimer <= 0) {
-        this.sprite.clearTint();
+        if (this.state === 'wind') {
+          this.sprite.setTint(BOSS_POWERS[this.power].tint);
+        } else {
+          this.sprite.clearTint();
+        }
       }
     }
   }
 
+  // Poderes especiales. Devuelve true si el poder controla el movimiento del jefe este cuadro.
   updateBoss(dt, player) {
+    const power = BOSS_POWERS[this.power];
+
     if (this.state === 'chase') {
       this.abilityTimer -= dt;
-      if (this.abilityTimer <= 0) {
-        this.state = 'telegraph';
-        this.chargeTimer = 1;
-        this.chargeTarget = { x: player.x, y: player.y };
-        this.sprite.setTint(0xff6b6b);
-        this.scene.audio.boss();
+      if (this.abilityTimer <= 0 && this.scene.phase === 'playing') {
+        this.startPower(power);
+      }
+      return false;
+    }
+
+    this.stateTimer -= dt;
+
+    if (this.state === 'wind') {
+      this.sprite.setAngle(Math.sin(this.stateTimer * 40) * 7);
+      if (this.stateTimer <= 0) {
+        this.sprite.setAngle(0);
+        this.releasePower(power, player);
+      }
+      return true;
+    }
+
+    if (this.state === 'act') {
+      if (this.power === 'ram') {
+        this.updateRam(dt, power);
+      } else if (this.power === 'rain') {
+        this.updateRain(dt, power, player);
+      }
+      return true;
+    }
+
+    // 'recover': breve pausa al terminar el poder.
+    if (this.stateTimer <= 0) {
+      this.state = 'chase';
+      this.abilityTimer = power.cooldown;
+      this.sprite.clearTint();
+      if (this.power === 'ram') {
+        this.scene.endMapView();
       }
     }
+    return true;
+  }
+
+  startPower(power) {
+    this.state = 'wind';
+    this.stateTimer = power.windTime;
+    this.sprite.setTint(power.tint);
+    this.scene.audio.boss();
+    this.scene.showNotice('¡' + power.name + '!');
+    if (this.power === 'ram') {
+      this.scene.beginMapView();
+    } else if (this.power === 'bleach') {
+      this.scene.spawnBleachWarning(this.sprite.x, this.sprite.y, power.radius, power.windTime);
+    } else if (this.power === 'rain') {
+      this.hoverTarget = 1.25;
+    }
+  }
+
+  releasePower(power, player) {
+    if (this.power === 'ram') {
+      const dx = player.x - this.sprite.x;
+      const dy = player.y - this.sprite.y;
+      const dist = Math.hypot(dx, dy) || 1;
+      this.vx = (dx / dist) * power.speed;
+      this.vy = (dy / dist) * power.speed;
+      this.bounces = 0;
+      this.state = 'act';
+      this.stateTimer = power.maxTime;
+    } else if (this.power === 'bleach') {
+      this.scene.spawnBleachWave(this.sprite.x, this.sprite.y);
+      this.sprite.clearTint();
+      this.state = 'recover';
+      this.stateTimer = 0.6;
+    } else {
+      this.state = 'act';
+      this.stateTimer = power.duration;
+      this.dropTimer = 0;
+      this.noContact = true;
+      this.sprite.setAlpha(0.7);
+    }
+  }
+
+  // Embestida: avanza en línea recta, atraviesa al jugador y rebota en las paredes.
+  updateRam(dt, power) {
+    this.sprite.x += this.vx * dt;
+    this.sprite.y += this.vy * dt;
+
+    let bounced = false;
+    if (this.sprite.x < this.radius && this.vx < 0) {
+      this.sprite.x = this.radius;
+      this.vx = -this.vx;
+      bounced = true;
+    } else if (this.sprite.x > ARENA_WIDTH - this.radius && this.vx > 0) {
+      this.sprite.x = ARENA_WIDTH - this.radius;
+      this.vx = -this.vx;
+      bounced = true;
+    }
+    if (this.sprite.y < this.radius && this.vy < 0) {
+      this.sprite.y = this.radius;
+      this.vy = -this.vy;
+      bounced = true;
+    } else if (this.sprite.y > ARENA_HEIGHT - this.radius && this.vy > 0) {
+      this.sprite.y = ARENA_HEIGHT - this.radius;
+      this.vy = -this.vy;
+      bounced = true;
+    }
+
+    if (bounced) {
+      this.bounces += 1;
+      this.scene.shake('bossDown', true);
+      this.scene.audio.hit();
+    }
+    if (this.bounces >= power.bounces || this.stateTimer <= 0) {
+      this.state = 'recover';
+      this.stateTimer = 0.7;
+    }
+  }
+
+  // Lluvia antiséptica: flota y marca puntos del suelo donde caerán gotas.
+  updateRain(dt, power, player) {
+    this.dropTimer -= dt;
+    while (this.dropTimer <= 0) {
+      this.dropTimer += power.dropInterval;
+      this.spawnDrop(player);
+    }
+    if (this.stateTimer <= 0) {
+      this.state = 'recover';
+      this.stateTimer = 0.5;
+      this.noContact = false;
+      this.hoverTarget = 1;
+      this.sprite.setAlpha(1);
+      this.sprite.clearTint();
+    }
+  }
+
+  spawnDrop(player) {
+    const angle = Math.random() * Math.PI * 2;
+    // La mitad de las gotas caen cerca del jugador; el resto, repartidas por la zona.
+    const reach = Math.random() < 0.45 ? Math.random() * 110 : 80 + Math.random() * 620;
+    const x = Phaser.Math.Clamp(player.x + Math.cos(angle) * reach, 60, ARENA_WIDTH - 60);
+    const y = Phaser.Math.Clamp(player.y + Math.sin(angle) * reach, 60, ARENA_HEIGHT - 60);
+    this.scene.spawnRainMark(x, y);
   }
 
   separate(enemies) {
