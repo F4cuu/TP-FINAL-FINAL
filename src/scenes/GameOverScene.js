@@ -170,6 +170,9 @@ class GameOverScene extends Phaser.Scene {
         .setOrigin(0.5)
         .setInteractive({ useHandCursor: true });
       item.on('pointerover', () => {
+        if (this.selected !== i) {
+          AudioManager.uiMove();
+        }
         this.selected = i;
         this.refresh();
       });
@@ -204,13 +207,17 @@ class GameOverScene extends Phaser.Scene {
   }
 
   leaveTo(sceneKey) {
-    this.scene.stop('GameScene');
-    this.scene.start(sceneKey);
+    AudioManager.uiSelect();
+    Transition.go(this, () => {
+      this.scene.stop('GameScene');
+      this.scene.start(sceneKey);
+    });
   }
 
   move(delta) {
     this.selected = Phaser.Math.Wrap(this.selected + delta, 0, this.items.length);
     this.refresh();
+    AudioManager.uiMove();
   }
 
   refresh() {

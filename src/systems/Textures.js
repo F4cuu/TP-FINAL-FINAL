@@ -49,6 +49,17 @@ function createTextures(scene) {
   g.fillCircle(4, 4, 4);
   g.generateTexture('particle', 8, 8);
 
+  // Burbuja de jabón para las transiciones entre pantallas.
+  g.clear();
+  g.fillStyle(0x8fe3ff, 0.3);
+  g.fillCircle(64, 64, 60);
+  g.lineStyle(4, 0xd6f7ff, 0.95);
+  g.strokeCircle(64, 64, 60);
+  g.fillStyle(0xffffff, 0.85);
+  g.fillCircle(42, 40, 11);
+  g.fillCircle(56, 31, 4);
+  g.generateTexture('bubble', 128, 128);
+
   g.clear();
   g.fillStyle(0xffffff, 1);
   g.fillRect(16, 4, 12, 40);

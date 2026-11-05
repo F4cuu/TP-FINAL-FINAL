@@ -74,7 +74,7 @@ Adaptar el análisis al dominio de este videojuego (Vampire Survivors, Phaser 4)
 - Armas: hasta 4 equipables, autodisparo al enemigo más cercano, daño base 10.
 - Enemigos: Simples, Cazadores, Compuestos y Jefes, con HP y daño propios.
 - Tienda y mejoras: pantalla entre oleadas, elegir entre 3 opciones, mejoras acumulables por niveles.
-- Feedback de juego (polvo, vibración de cámara, música): parámetros en `src/data/constants.js` (`SHAKE`, `DEATH`). Música: pistas en `src/systems/MusicTracks.js` y motor en `src/systems/AudioManager.js` (`playMusic(nombre)`); `AudioManager.enabled` = efectos y `musicEnabled` = música. Íconos de estadísticas en `src/systems/StatIcons.js`.
+- Feedback de juego (polvo, vibración de cámara, música): parámetros en `src/data/constants.js` (`SHAKE`, `DEATH`). Música: pistas en `src/systems/MusicTracks.js` y motor en `src/systems/AudioManager.js` (`playMusic(nombre)`); `AudioManager.enabled` = efectos y `musicEnabled` = música. Íconos de estadísticas en `src/systems/StatIcons.js`. Sonidos de interfaz: `AudioManager.uiMove/uiSelect/uiBack/uiToggle/uiDeny`. Cambios de escena: `Transition.go(escena, accion)` y `Transition.in(escena)` (`src/systems/Transition.js`, burbujas). Nombres de jefes: `namesByWave` en `src/data/enemies.js`.
 - Controles de PC (teclado) y mobile si aplica.
 
 ## 4. Preguntar antes de avanzar ante dudas

@@ -37,7 +37,7 @@ const AudioManager = {
     }
   },
 
-  beep: function (freq, duration, type, volume) {
+  beep: function (freq, duration, type, volume, delay) {
     if (!this.enabled) {
       return;
     }
@@ -50,14 +50,15 @@ const AudioManager = {
     }
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
+    const start = this.ctx.currentTime + (delay || 0);
     osc.type = type || 'square';
     osc.frequency.value = freq;
-    gain.gain.setValueAtTime(volume || 0.04, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+    gain.gain.setValueAtTime(volume || 0.04, start);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
     osc.connect(gain);
     gain.connect(this.ctx.destination);
-    osc.start();
-    osc.stop(this.ctx.currentTime + duration);
+    osc.start(start);
+    osc.stop(start + duration);
   },
 
   shoot: function () {
@@ -82,9 +83,48 @@ const AudioManager = {
     this.beep(150, 0.6, 'sawtooth', 0.07);
   },
 
+  // ---- Interfaz (menús, tienda, pausa) ----
+
+  // Mover la selección (flechas o pasar el mouse).
+  uiMove: function () {
+    this.beep(520, 0.035, 'triangle', 0.03);
+  },
+  // Confirmar una opción: dos notas ascendentes.
+  uiSelect: function () {
+    this.init();
+    this.beep(660, 0.06, 'sine', 0.05);
+    this.beep(990, 0.09, 'sine', 0.045, 0.05);
+  },
+  // Volver atrás: dos notas descendentes.
+  uiBack: function () {
+    this.beep(500, 0.06, 'sine', 0.045);
+    this.beep(330, 0.09, 'sine', 0.04, 0.05);
+  },
+  // Activar / desactivar una opción.
+  uiToggle: function (on) {
+    this.init();
+    this.beep(on ? 600 : 420, 0.05, 'sine', 0.05);
+    this.beep(on ? 900 : 300, 0.08, 'sine', 0.045, 0.05);
+  },
+  // Acción no permitida (sin monedas, etc.).
+  uiDeny: function () {
+    this.beep(180, 0.1, 'sawtooth', 0.05);
+  },
+  // Transición entre pantallas: burbujas que suben al taparse y estallan al abrirse.
+  transitionOut: function () {
+    for (let i = 0; i < 5; i++) {
+      this.beep(280 + i * 140, 0.07, 'sine', 0.04, i * 0.05);
+    }
+  },
+  transitionIn: function () {
+    for (let i = 0; i < 4; i++) {
+      this.beep(960 - i * 150, 0.05, 'sine', 0.035, i * 0.045);
+    }
+  },
+
   // ---- Música ----
 
-  // Reproduce una pista ('menu', 'battle', 'boss', 'defeat'). Si ya suena, no la reinicia.
+  // Reproduce una pista ('menu', 'battle', 'boss', 'shop', 'defeat'). Si ya suena, no la reinicia.
   playMusic: function (name) {
     if (!MUSIC_TRACKS[name]) {
       return;

@@ -6,6 +6,7 @@ class OptionsScene extends Phaser.Scene {
   create() {
     this.cameras.main.setBackgroundColor(COLORS.bg);
     applyUiCamera(this);
+    Transition.in(this);
 
     this.add
       .text(GAME_WIDTH / 2, 120, 'Opciones', {
@@ -43,11 +44,16 @@ class OptionsScene extends Phaser.Scene {
       })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true })
-      .on('pointerdown', () => this.scene.start('MenuScene'));
+      .on('pointerdown', () => this.goBack());
 
     this.refresh();
 
-    this.input.keyboard.on('keydown-ESC', () => this.scene.start('MenuScene'));
+    this.input.keyboard.on('keydown-ESC', () => this.goBack());
+  }
+
+  goBack() {
+    AudioManager.uiBack();
+    Transition.go(this, () => this.scene.start('MenuScene'));
   }
 
   // Efectos de sonido: disparos, impactos, tienda, etc.
@@ -55,7 +61,7 @@ class OptionsScene extends Phaser.Scene {
     AudioManager.enabled = !AudioManager.enabled;
     if (AudioManager.enabled) {
       AudioManager.init();
-      AudioManager.beep(600, 0.08, 'sine', 0.05);
+      AudioManager.uiToggle(true);
     }
     this.refresh();
   }
@@ -63,6 +69,7 @@ class OptionsScene extends Phaser.Scene {
   // Música de fondo (independiente de los efectos).
   toggleMusic() {
     AudioManager.musicEnabled = !AudioManager.musicEnabled;
+    AudioManager.uiToggle(AudioManager.musicEnabled);
     this.refresh();
   }
 

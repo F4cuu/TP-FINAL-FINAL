@@ -14,6 +14,7 @@ class Enemy {
     this.dead = false;
     this.incomingDamage = 0;
     this.isBoss = def.key === 'boss';
+    this.name = bossNameForWave(def, scene.wave);
 
     this.breath = Math.random() * Math.PI * 2;
     this.trailTimer = 0;

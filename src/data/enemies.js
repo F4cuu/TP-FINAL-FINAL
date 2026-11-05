@@ -53,6 +53,7 @@ const ENEMY_DEFS = {
   boss: {
     key: 'boss',
     name: 'Jefe',
+    namesByWave: { 3: 'Jabonoso Alvo', 6: 'Clororín Bravo', 9: 'Antisepticus Liquidus' },
     texture: 'enemy_boss',
     texturesByWave: { 3: 'enemy_boss_1', 6: 'enemy_boss_2', 9: 'enemy_boss_3' },
     hp: 1125,
@@ -65,3 +66,8 @@ const ENEMY_DEFS = {
     coins: [50, 100]
   }
 };
+
+// Nombre propio del jefe de la oleada (o el nombre genérico del enemigo).
+function bossNameForWave(def, wave) {
+  return (def.namesByWave && def.namesByWave[wave]) || def.name;
+}

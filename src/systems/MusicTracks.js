@@ -6,7 +6,7 @@
 //   play  - qué sonar en cada paso (usa los ayudantes de AudioManager)
 // Melodía: [paso 0-15, nota MIDI, duración en pasos].
 //
-// Pistas: menu (tranquila), battle (rondas normales), boss (jefe presente), defeat (derrota).
+// Pistas: menu (tranquila), battle (rondas normales), boss (jefe presente), shop (tienda), defeat (derrota).
 
 const MUSIC_STEPS_PER_BAR = 16;
 
@@ -19,6 +19,19 @@ function buildLeadMap(bars) {
     return steps;
   });
 }
+
+// ---------- Tienda: relajada y juguetona (do mayor, acordes de séptima) ----------
+const MUSIC_SHOP_BARS = [
+  { root: 48, chord: [60, 64, 67, 71], lead: [[2, 79, 2], [6, 76, 2], [8, 72, 4], [14, 74, 2]] },
+  { root: 45, chord: [57, 60, 64, 67], lead: [[2, 76, 2], [6, 72, 2], [8, 69, 4], [14, 72, 2]] },
+  { root: 50, chord: [62, 65, 69, 72], lead: [[2, 77, 2], [6, 74, 2], [8, 69, 4], [14, 71, 2]] },
+  { root: 43, chord: [55, 59, 62, 65], lead: [[2, 74, 2], [6, 71, 2], [8, 67, 4], [12, 71, 2], [14, 74, 2]] },
+  { root: 48, chord: [60, 64, 67, 71], lead: [[0, 76, 2], [4, 79, 2], [8, 84, 4], [14, 83, 2]] },
+  { root: 40, chord: [59, 62, 64, 67], lead: [[2, 83, 2], [6, 79, 2], [8, 76, 4], [14, 79, 2]] },
+  { root: 41, chord: [53, 57, 60, 64], lead: [[2, 81, 2], [6, 77, 2], [8, 72, 4], [14, 76, 2]] },
+  { root: 43, chord: [55, 59, 62, 65], lead: [[2, 79, 2], [6, 77, 2], [8, 74, 4], [12, 71, 4]] }
+];
+const MUSIC_SHOP_LEAD = buildLeadMap(MUSIC_SHOP_BARS);
 
 // ---------- Menú principal: tranquila ----------
 const MUSIC_MENU_BARS = [
@@ -192,6 +205,37 @@ const MUSIC_TRACKS = {
       audio.musicNoise(time, 0.03, 7500, 'highpass', s % 2 === 1 ? 0.03 : 0.018);
       if (s === 0 && barIndex % 4 === 0) {
         audio.musicNoise(time, 0.5, 3500, 'highpass', 0.05);
+      }
+    }
+  },
+
+  shop: {
+    bpm: 104,
+    bars: MUSIC_SHOP_BARS,
+    play: function (audio, barIndex, s, time, d) {
+      const bar = MUSIC_SHOP_BARS[barIndex];
+      // Bajo saltarín: raíz en los tiempos fuertes, octava en el "y".
+      if (s === 0 || s === 8) {
+        audio.musicTone(bar.root, time, d * 3, 'triangle', 0.09, 600, 0.01);
+        audio.musicKick(time, 0.06, 110, 45);
+      }
+      if (s === 6 || s === 14) {
+        audio.musicTone(bar.root + 12, time, d * 1.5, 'triangle', 0.06, 700, 0.01);
+      }
+      // Acordes cortos a contratiempo.
+      if (s === 4 || s === 12) {
+        bar.chord.forEach(function (note) {
+          audio.musicTone(note, time, d * 1.6, 'triangle', 0.028, 1800, 0.01);
+        });
+      }
+      // Melodía a pizzicato.
+      const lead = MUSIC_SHOP_LEAD[barIndex][s];
+      if (lead) {
+        audio.musicTone(lead.midi, time, d * lead.len, 'square', 0.03, 2600, 0.01);
+      }
+      // Platillo suave.
+      if (s % 2 === 1) {
+        audio.musicNoise(time, 0.03, 8000, 'highpass', 0.02);
       }
     }
   },

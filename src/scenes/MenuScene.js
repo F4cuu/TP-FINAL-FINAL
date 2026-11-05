@@ -6,6 +6,7 @@ class MenuScene extends Phaser.Scene {
   create() {
     this.cameras.main.setBackgroundColor(COLORS.bg);
     applyUiCamera(this);
+    Transition.in(this);
     AudioManager.playMusic('menu');
     this.createDecorations();
     this.createTitle();
@@ -197,9 +198,9 @@ class MenuScene extends Phaser.Scene {
   createOptions() {
     const cx = GAME_WIDTH / 2;
     this.options = [
-      { label: 'Jugar', action: () => this.scene.start('GameScene') },
-      { label: 'Opciones', action: () => this.scene.start('OptionsScene') },
-      { label: 'Salir', action: () => this.scene.start('StartScene') }
+      { label: 'Jugar', action: () => Transition.go(this, () => this.scene.start('GameScene')) },
+      { label: 'Opciones', action: () => Transition.go(this, () => this.scene.start('OptionsScene')) },
+      { label: 'Salir', action: () => Transition.go(this, () => this.scene.start('StartScene')) }
     ];
     this.selected = 0;
     this.items = [];
@@ -222,6 +223,9 @@ class MenuScene extends Phaser.Scene {
       );
       container.input.cursor = 'pointer';
       container.on('pointerover', () => {
+        if (this.selected !== i) {
+          AudioManager.uiMove();
+        }
         this.selected = i;
         this.refresh();
       });
@@ -246,7 +250,7 @@ class MenuScene extends Phaser.Scene {
   move(delta) {
     this.selected = Phaser.Math.Wrap(this.selected + delta, 0, this.items.length);
     this.refresh();
-    AudioManager.beep(300, 0.04, 'square', 0.03);
+    AudioManager.uiMove();
   }
 
   refresh() {
@@ -268,7 +272,7 @@ class MenuScene extends Phaser.Scene {
 
   activate(index) {
     AudioManager.init();
-    AudioManager.beep(600, 0.08, 'sine', 0.05);
+    AudioManager.uiSelect();
     this.options[index].action();
   }
 }
