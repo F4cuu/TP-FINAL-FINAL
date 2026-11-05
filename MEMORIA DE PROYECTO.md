@@ -208,6 +208,12 @@
 - **Divergencias con el GDD (el GDD no se modificó):** §3 resolución interna 1280x720; §12 recompensa y fin de oleada al matar al jefe; «no hay música»; vida de jefes (el GDD ya figuraba desactualizado: 3000/6000/10000).
 - **Verificación:** `node --check` de todos los `.js`; prueba de lógica con Phaser simulado (jefe sin cortar la oleada, recompensa al terminar el tiempo, secuencia de muerte, `GameOverScene`) y del planificador de música con WebAudio simulado. **No se ejecutó en un navegador real:** falta probar visualmente el zoom/HUD, la vibración, el polvo y el sonido.
 
+### Música por escena, opciones de audio y pantalla de derrota — octava tanda
+- **Pistas** (`src/systems/MusicTracks.js`, reproducidas por `AudioManager.playMusic(nombre)`): `menu` (tranquila, 72 BPM, sin percusión), `battle` (rondas normales, 124 BPM), `boss` (150 BPM, bajo sierra, doble bombo y riffs; suena mientras haya un jefe vivo o por aparecer, vía `GameScene.updateMusicMode`) y `defeat` (lenta y apagada, 54 BPM, filtrada). La victoria reutiliza `menu`. El cambio de pista corta y entra con fundido; durante la muerte la pista de ronda se frena y se apaga antes de entrar `defeat`.
+- **Opciones/Pausa:** `AudioManager.enabled` ahora controla solo los efectos y la nueva `AudioManager.musicEnabled` solo la música. Opciones muestra «Efectos de sonido» y «Música»; la pausa muestra «Efectos» y «Música». No se guardan entre sesiones.
+- **Derrota** (`GameOverScene`): COMBATE muestra solo enemigos derrotados (total), jefes derrotados y monedas; ARMAS EQUIPADAS sin cambios; ARMAS Y ESTADÍSTICAS muestra arma con mayor daño, vida máxima, velocidad alcanzada, daño aumentado, cadencia, tamaño de área y perforación. Cada estadística lleva un ícono geométrico dibujado por código (`src/systems/StatIcons.js`: calavera, corona, moneda, espada, corazón, rayo, estallido, doble flecha, diana, flecha con aro). Ya no se muestran «más disparos», «más bajas» ni el desglose por tipo (los datos siguen en `buildRunStats`).
+- **Verificación:** `node --check`; prueba con WebAudio simulado (las 4 pistas recorren dos vueltas sin errores y las banderas de música/efectos son independientes) y con Phaser simulado (cambio `battle`↔`boss` al aparecer/morir el jefe, textos de la derrota, Opciones y Pausa). No se probó en un navegador real: falta oír las pistas y revisar el diseño de la derrota.
+
 - **Git:** repositorio inicializado en rama `main`.
   - Remoto: `https://github.com/F4cuu/TP-FINAL-FINAL.git` (origin).
   - Identidad local: `F4cuu` / `f4cundoibanez@gmail.com`.

@@ -14,22 +14,29 @@ class GameOverScene extends Phaser.Scene {
     return minutes + ':' + String(secs).padStart(2, '0');
   }
 
-  weaponMetric(entry, metric) {
+  weaponMetric(entry) {
     if (!entry) {
       return '—';
     }
-    if (metric === 'damage') {
-      return entry.name + ' (' + entry.damage + ' daño)';
-    }
-    if (metric === 'shots') {
-      return entry.name + ' (' + entry.shots + ' disparos)';
-    }
-    return entry.name + ' (' + entry.kills + ' bajas)';
+    return entry.name + ' (' + entry.damage + ' daño)';
+  }
+
+  // Fila de estadística: ícono geométrico + texto.
+  addStatRow(x, y, kind, label) {
+    createStatIcon(this, kind, x + 14, y);
+    this.add
+      .text(x + 42, y, label, {
+        fontFamily: FONT_FAMILY,
+        fontSize: '19px',
+        color: COLORS.text
+      })
+      .setOrigin(0, 0.5);
   }
 
   create() {
     // Sin color de fondo: se ve la partida detenida de GameScene por detrás.
     applyUiCamera(this);
+    AudioManager.playMusic(this.result.victory ? 'menu' : 'defeat');
     this.buildBackdrop();
     const d = this.result;
     const stats = d.stats || {};
@@ -58,6 +65,7 @@ class GameOverScene extends Phaser.Scene {
       )
       .setOrigin(0.5);
 
+    // COMBATE: solo totales.
     this.add
       .text(70, 150, 'COMBATE', {
         fontFamily: FONT_FAMILY,
@@ -66,26 +74,15 @@ class GameOverScene extends Phaser.Scene {
       })
       .setOrigin(0, 0.5);
 
-    const combatLines = [
-      'Monedas conseguidas: ' + (stats.coinsEarned != null ? stats.coinsEarned : d.coins || 0),
-      'Enemigos comunes: ' + (byType.simple || 0),
-      'Enemigos cazadores: ' + (byType.hunter || 0),
-      'Enemigos compuestos: ' + (byType.compound || 0),
-      'Jefes derrotados: ' + (stats.bosses != null ? stats.bosses : byType.boss || 0),
-      'Total de enemigos: ' + (stats.kills != null ? stats.kills : d.kills || 0)
+    const combatRows = [
+      ['kills', 'Enemigos derrotados: ' + (stats.kills != null ? stats.kills : d.kills || 0)],
+      ['bosses', 'Jefes derrotados: ' + (stats.bosses != null ? stats.bosses : byType.boss || 0)],
+      ['coins', 'Monedas conseguidas: ' + (stats.coinsEarned != null ? stats.coinsEarned : d.coins || 0)]
     ];
+    combatRows.forEach((row, i) => this.addStatRow(70, 198 + i * 40, row[0], row[1]));
 
     this.add
-      .text(70, 184, combatLines.join('\n'), {
-        fontFamily: FONT_FAMILY,
-        fontSize: '19px',
-        color: COLORS.text,
-        lineSpacing: 9
-      })
-      .setOrigin(0, 0);
-
-    this.add
-      .text(70, 405, 'ARMAS EQUIPADAS', {
+      .text(70, 340, 'ARMAS EQUIPADAS', {
         fontFamily: FONT_FAMILY,
         fontSize: '20px',
         color: '#9be15d'
@@ -95,7 +92,7 @@ class GameOverScene extends Phaser.Scene {
     const equipped = stats.weapons || [];
     if (equipped.length === 0) {
       this.add
-        .text(70, 433, '—', {
+        .text(70, 368, '—', {
           fontFamily: FONT_FAMILY,
           fontSize: '16px',
           color: COLORS.textDim
@@ -104,7 +101,7 @@ class GameOverScene extends Phaser.Scene {
     } else {
       equipped.slice(0, 4).forEach((weapon, i) => {
         this.add
-          .text(70 + (i % 2) * 300, 433 + Math.floor(i / 2) * 29, weapon.name + ' Nv.' + weapon.level, {
+          .text(70 + (i % 2) * 300, 368 + Math.floor(i / 2) * 29, weapon.name + ' Nv.' + weapon.level, {
             fontFamily: FONT_FAMILY,
             fontSize: '16px',
             color: COLORS.textDim
@@ -113,6 +110,7 @@ class GameOverScene extends Phaser.Scene {
       });
     }
 
+    // ARMAS Y ESTADÍSTICAS: arma con mayor daño y mejoras acumuladas.
     this.add
       .text(690, 150, 'ARMAS Y ESTADÍSTICAS', {
         fontFamily: FONT_FAMILY,
@@ -121,30 +119,19 @@ class GameOverScene extends Phaser.Scene {
       })
       .setOrigin(0, 0.5);
 
-    const performanceLines = [
-      'Mayor daño: ' + this.weaponMetric(stats.bestDamage, 'damage'),
-      'Más disparos: ' + this.weaponMetric(stats.bestShots, 'shots'),
-      'Más bajas: ' + this.weaponMetric(stats.bestKills, 'kills'),
-      'Vida máxima: ' + (player.maxHp || PLAYER_DEF.hp),
-      'Velocidad: ' +
-        (player.speed || PLAYER_DEF.speed) +
-        ' (+' +
-        (player.speedPct || 0) +
-        '%)',
-      'Daño aumentado: +' + (player.damagePct || 0) + '%',
-      'Cadencia: +' + (player.fireRatePct || 0) + '%',
-      'Tamaño de área: +' + (player.areaPct || 0) + '%',
-      'Perforación: +' + (player.pierce || 0)
+    const performanceRows = [
+      ['weapon', 'Mayor daño: ' + this.weaponMetric(stats.bestDamage)],
+      ['health', 'Vida máxima: ' + (player.maxHp || PLAYER_DEF.hp)],
+      [
+        'speed',
+        'Velocidad alcanzada: ' + (player.speed || PLAYER_DEF.speed) + ' (+' + (player.speedPct || 0) + '%)'
+      ],
+      ['damage', 'Daño aumentado: +' + (player.damagePct || 0) + '%'],
+      ['fireRate', 'Cadencia: +' + (player.fireRatePct || 0) + '%'],
+      ['area', 'Tamaño de área: +' + (player.areaPct || 0) + '%'],
+      ['pierce', 'Perforación: +' + (player.pierce || 0)]
     ];
-
-    this.add
-      .text(690, 184, performanceLines.join('\n'), {
-        fontFamily: FONT_FAMILY,
-        fontSize: '19px',
-        color: COLORS.text,
-        lineSpacing: 9
-      })
-      .setOrigin(0, 0);
+    performanceRows.forEach((row, i) => this.addStatRow(690, 198 + i * 38, row[0], row[1]));
 
     const r = d.records || ScoreStore.get();
     this.add
@@ -206,11 +193,11 @@ class GameOverScene extends Phaser.Scene {
 
     const panels = this.add.graphics();
     panels.fillStyle(0x0b1026, 0.7);
-    panels.fillRoundedRect(46, 124, 610, 362, 16);
-    panels.fillRoundedRect(666, 124, 568, 362, 16);
+    panels.fillRoundedRect(46, 124, 610, 350, 16);
+    panels.fillRoundedRect(666, 124, 568, 350, 16);
     panels.lineStyle(2, 0x3a5bd0, 0.7);
-    panels.strokeRoundedRect(46, 124, 610, 362, 16);
-    panels.strokeRoundedRect(666, 124, 568, 362, 16);
+    panels.strokeRoundedRect(46, 124, 610, 350, 16);
+    panels.strokeRoundedRect(666, 124, 568, 350, 16);
     panels.setAlpha(0);
 
     this.tweens.add({ targets: [dim, panels], alpha: 1, duration: 600 });
