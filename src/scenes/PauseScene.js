@@ -11,7 +11,7 @@ class PauseScene extends Phaser.Scene {
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x05070f, 0.75);
 
     this.add
-      .text(GAME_WIDTH / 2, 140, 'PAUSA', {
+      .text(GAME_WIDTH / 2, 140, t('PAUSA'), {
         fontFamily: FONT_FAMILY,
         fontSize: '52px',
         color: '#e8f0ff'
@@ -19,11 +19,11 @@ class PauseScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.buttons = [
-      { label: 'Continuar', action: () => this.resumeGame() },
-      { label: 'Efectos: ' + (AudioManager.enabled ? 'ON' : 'OFF'), action: () => this.toggleSound() },
-      { label: 'Música: ' + (AudioManager.musicEnabled ? 'ON' : 'OFF'), action: () => this.toggleMusic() },
-      { label: 'Reiniciar', action: () => this.restartGame() },
-      { label: 'Salir al menu', action: () => this.exitToMenu() }
+      { label: t('Continuar'), action: () => this.resumeGame() },
+      { label: t('Efectos:') + ' ' + (AudioManager.enabled ? 'ON' : 'OFF'), action: () => this.toggleSound() },
+      { label: t('Música:') + ' ' + (AudioManager.musicEnabled ? 'ON' : 'OFF'), action: () => this.toggleMusic() },
+      { label: t('Reiniciar'), action: () => this.restartGame() },
+      { label: t('Salir al menu'), action: () => this.exitToMenu() }
     ];
 
     this.items = [];
@@ -77,14 +77,14 @@ class PauseScene extends Phaser.Scene {
 
   toggleSound() {
     AudioManager.enabled = !AudioManager.enabled;
-    this.buttons[1].label = 'Efectos: ' + (AudioManager.enabled ? 'ON' : 'OFF');
+    this.buttons[1].label = t('Efectos:') + ' ' + (AudioManager.enabled ? 'ON' : 'OFF');
     this.items[1].setText(this.buttons[1].label);
     AudioManager.uiToggle(AudioManager.enabled);
   }
 
   toggleMusic() {
     AudioManager.musicEnabled = !AudioManager.musicEnabled;
-    this.buttons[2].label = 'Música: ' + (AudioManager.musicEnabled ? 'ON' : 'OFF');
+    this.buttons[2].label = t('Música:') + ' ' + (AudioManager.musicEnabled ? 'ON' : 'OFF');
     this.items[2].setText(this.buttons[2].label);
     AudioManager.uiToggle(AudioManager.musicEnabled);
   }
