@@ -136,7 +136,7 @@ class Enemy {
     this.stateTimer = power.windTime;
     this.sprite.setTint(power.tint);
     this.scene.audio.boss();
-    this.scene.showNotice('¡' + power.name + '!');
+    this.scene.showNotice(t('¡{name}!', { name: t(power.name) }));
     if (this.power === 'ram') {
       this.scene.beginMapView();
     } else if (this.power === 'bleach') {

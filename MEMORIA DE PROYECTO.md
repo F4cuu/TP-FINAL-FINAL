@@ -229,6 +229,13 @@
 - **Implementación:** los peligros del suelo son `GameScene.hazards` (tipos `warn`, `ring`, `mark`, `puddle`) dibujados con un único `Graphics` (`updateHazards`). Valores de balance en `BOSS_POWERS`.
 - **Verificación:** `node --check` y simulación con Phaser simulado (estados de cada poder, zoom 1,5 → 0,45 → 1,5, daño del anillo y de los charcos, reposición de la cámara). **No se vio en un navegador real:** el balance, la cámara y los efectos visuales están sin probar a ojo.
 
+### Traducción al inglés — undécima tanda
+- **Sistema:** `src/systems/I18n.js` (cargado antes de Textures). `t('texto en español', { params })` devuelve el texto en el idioma activo; la clave es el propio texto en español y si falta la traducción se muestra el español. `I18n.setLang/toggle/label`; el idioma se guarda en `localStorage` (`pablito_lang`) y por defecto es español. Los parámetros van como `{name}`, `{n}`, `{mult}`.
+- **Diccionario:** `EN_TRANSLATIONS` en `I18n.js`. Incluye el archivo de traducción del proyecto (JSON con `key`/`translate`) tal cual, salvo cuatro correcciones: «Oleada 8/9» (estaba sin traducir), «[Efectos de sonido: ON]» (sin traducir), «Músic:» → «Music:» y «+25% maximum health» → «+25 maximum health» (la mejora da +25 de vida fija, no un porcentaje). Los textos que el archivo no tenía están en la sección «Agregadas».
+- **Selector:** Opciones → «[ Idioma: Español / English ]» (reinicia la escena de opciones sin transición). Los nombres de armas y mejoras se traducen al mostrarse (`t(def.name)`); los datos en `data/` siguen en español. Los nombres de los jefes no se traducen.
+- **Pendiente / a revisar:** el JSON trae claves que el código ya no usa (p. ej. «Oleada 3/9» o «Sonido:»; ahora se arma con «Oleada» + número). Quedó «odas de bacterias» (sic) en el texto en español de la intro porque la clave del diccionario debe coincidir con él.
+- **Verificación:** `node --check` y simulación en español e inglés (avisos de jefe, tienda, creación de escenas, cambio de idioma). No se vio en un navegador real.
+
 - **Git:** repositorio inicializado en rama `main`.
   - Remoto: `https://github.com/F4cuu/TP-FINAL-FINAL.git` (origin).
   - Identidad local: `F4cuu` / `f4cundoibanez@gmail.com`.

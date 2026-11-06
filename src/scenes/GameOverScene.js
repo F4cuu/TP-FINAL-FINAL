@@ -18,7 +18,7 @@ class GameOverScene extends Phaser.Scene {
     if (!entry) {
       return '—';
     }
-    return entry.name + ' (' + entry.damage + ' daño)';
+    return t(entry.name) + ' (' + entry.damage + ' ' + t('daño') + ')';
   }
 
   // Fila de estadística: ícono geométrico + texto.
@@ -45,7 +45,7 @@ class GameOverScene extends Phaser.Scene {
     const totalTime = stats.time != null ? stats.time : d.time || 0;
 
     this.add
-      .text(GAME_WIDTH / 2, 46, d.victory ? 'VICTORIA' : 'DERROTA', {
+      .text(GAME_WIDTH / 2, 46, d.victory ? t('VICTORIA') : t('DERROTA'), {
         fontFamily: FONT_FAMILY,
         fontSize: '50px',
         color: d.victory ? '#9be15d' : '#eb3b5a'
@@ -56,7 +56,7 @@ class GameOverScene extends Phaser.Scene {
       .text(
         GAME_WIDTH / 2,
         96,
-        'Oleada alcanzada: ' + (d.wave || 0) + '     Tiempo total: ' + this.formatTime(totalTime),
+        t('Oleada alcanzada:') + ' ' + (d.wave || 0) + '     ' + t('Tiempo total:') + ' ' + this.formatTime(totalTime),
         {
           fontFamily: FONT_FAMILY,
           fontSize: '19px',
@@ -67,7 +67,7 @@ class GameOverScene extends Phaser.Scene {
 
     // COMBATE: solo totales.
     this.add
-      .text(70, 150, 'COMBATE', {
+      .text(70, 150, t('COMBATE'), {
         fontFamily: FONT_FAMILY,
         fontSize: '20px',
         color: '#9be15d'
@@ -75,14 +75,14 @@ class GameOverScene extends Phaser.Scene {
       .setOrigin(0, 0.5);
 
     const combatRows = [
-      ['kills', 'Enemigos derrotados: ' + (stats.kills != null ? stats.kills : d.kills || 0)],
-      ['bosses', 'Jefes derrotados: ' + (stats.bosses != null ? stats.bosses : byType.boss || 0)],
-      ['coins', 'Monedas conseguidas: ' + (stats.coinsEarned != null ? stats.coinsEarned : d.coins || 0)]
+      ['kills', t('Enemigos derrotados:') + ' ' + (stats.kills != null ? stats.kills : d.kills || 0)],
+      ['bosses', t('Jefes derrotados:') + ' ' + (stats.bosses != null ? stats.bosses : byType.boss || 0)],
+      ['coins', t('Monedas conseguidas:') + ' ' + (stats.coinsEarned != null ? stats.coinsEarned : d.coins || 0)]
     ];
     combatRows.forEach((row, i) => this.addStatRow(70, 198 + i * 40, row[0], row[1]));
 
     this.add
-      .text(70, 340, 'ARMAS EQUIPADAS', {
+      .text(70, 340, t('ARMAS EQUIPADAS'), {
         fontFamily: FONT_FAMILY,
         fontSize: '20px',
         color: '#9be15d'
@@ -101,7 +101,7 @@ class GameOverScene extends Phaser.Scene {
     } else {
       equipped.slice(0, 4).forEach((weapon, i) => {
         this.add
-          .text(70 + (i % 2) * 300, 368 + Math.floor(i / 2) * 29, weapon.name + ' Nv.' + weapon.level, {
+          .text(70 + (i % 2) * 300, 368 + Math.floor(i / 2) * 29, t(weapon.name) + ' ' + t('Nv.') + weapon.level, {
             fontFamily: FONT_FAMILY,
             fontSize: '16px',
             color: COLORS.textDim
@@ -112,7 +112,7 @@ class GameOverScene extends Phaser.Scene {
 
     // ARMAS Y ESTADÍSTICAS: arma con mayor daño y mejoras acumuladas.
     this.add
-      .text(690, 150, 'ARMAS Y ESTADÍSTICAS', {
+      .text(690, 150, t('ARMAS Y ESTADÍSTICAS'), {
         fontFamily: FONT_FAMILY,
         fontSize: '20px',
         color: '#9be15d'
@@ -120,16 +120,16 @@ class GameOverScene extends Phaser.Scene {
       .setOrigin(0, 0.5);
 
     const performanceRows = [
-      ['weapon', 'Mayor daño: ' + this.weaponMetric(stats.bestDamage)],
-      ['health', 'Vida máxima: ' + (player.maxHp || PLAYER_DEF.hp)],
+      ['weapon', t('Mayor daño:') + ' ' + this.weaponMetric(stats.bestDamage)],
+      ['health', t('Vida maxima:') + ' ' + (player.maxHp || PLAYER_DEF.hp)],
       [
         'speed',
-        'Velocidad alcanzada: ' + (player.speed || PLAYER_DEF.speed) + ' (+' + (player.speedPct || 0) + '%)'
+        t('Velocidad alcanzada:') + ' ' + (player.speed || PLAYER_DEF.speed) + ' (+' + (player.speedPct || 0) + '%)'
       ],
-      ['damage', 'Daño aumentado: +' + (player.damagePct || 0) + '%'],
-      ['fireRate', 'Cadencia: +' + (player.fireRatePct || 0) + '%'],
-      ['area', 'Tamaño de área: +' + (player.areaPct || 0) + '%'],
-      ['pierce', 'Perforación: +' + (player.pierce || 0)]
+      ['damage', t('Daño aumentado:') + ' +' + (player.damagePct || 0) + '%'],
+      ['fireRate', t('Cadencia:') + ' +' + (player.fireRatePct || 0) + '%'],
+      ['area', t('Tamaño de área:') + ' +' + (player.areaPct || 0) + '%'],
+      ['pierce', t('Perforación:') + ' +' + (player.pierce || 0)]
     ];
     performanceRows.forEach((row, i) => this.addStatRow(690, 198 + i * 38, row[0], row[1]));
 
@@ -138,13 +138,13 @@ class GameOverScene extends Phaser.Scene {
       .text(
         GAME_WIDTH / 2,
         500,
-        'Record: Oleada ' +
+        t('Record') + ': ' + t('Oleada') + ' ' +
           r.maxWave +
-          '  |  Tiempo de combate ' +
+          '  |  ' + t('Tiempo de combate') + ' ' +
           this.formatTime(r.maxTime) +
-          '  |  Bajas ' +
+          '  |  ' + t('Bajas:').replace(':', '') + ' ' +
           r.maxKills +
-          '  |  Monedas ' +
+          '  |  ' + t('Monedas:').replace(':', '') + ' ' +
           r.maxCoins,
         {
           fontFamily: FONT_FAMILY,
@@ -155,8 +155,8 @@ class GameOverScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.buttons = [
-      { label: 'Reintentar', action: () => this.leaveTo('GameScene') },
-      { label: 'Menu principal', action: () => this.leaveTo('MenuScene') }
+      { label: t('Reintentar'), action: () => this.leaveTo('GameScene') },
+      { label: t('Menu principal'), action: () => this.leaveTo('MenuScene') }
     ];
 
     this.items = [];

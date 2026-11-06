@@ -150,7 +150,7 @@ class MenuScene extends Phaser.Scene {
     plate.strokeRoundedRect(cx - 350, 70, 700, 100, 18);
 
     this.add
-      .text(cx, 120, 'PABLITO: Bacteria Survivor', {
+      .text(cx, 120, t('PABLITO: Bacteria Survivor'), {
         fontFamily: FONT_FAMILY,
         fontSize: '46px',
         color: '#e8f0ff'
@@ -177,13 +177,14 @@ class MenuScene extends Phaser.Scene {
       .text(
         cx,
         212,
-        'Records   Oleada: ' +
+        t('Records') +
+          '   ' + t('Oleada:') + ' ' +
           records.maxWave +
-          '   Tiempo: ' +
+          '   ' + t('Tiempo:') + ' ' +
           records.maxTime +
-          's   Bajas: ' +
+          's   ' + t('Bajas:') + ' ' +
           records.maxKills +
-          '   Monedas: ' +
+          '   ' + t('Monedas:') + ' ' +
           records.maxCoins,
         {
           fontFamily: FONT_FAMILY,
@@ -198,9 +199,9 @@ class MenuScene extends Phaser.Scene {
   createOptions() {
     const cx = GAME_WIDTH / 2;
     this.options = [
-      { label: 'Jugar', action: () => Transition.go(this, () => this.scene.start('GameScene')) },
-      { label: 'Opciones', action: () => Transition.go(this, () => this.scene.start('OptionsScene')) },
-      { label: 'Salir', action: () => Transition.go(this, () => this.scene.start('StartScene')) }
+      { label: t('Jugar'), action: () => Transition.go(this, () => this.scene.start('GameScene')) },
+      { label: t('Opciones'), action: () => Transition.go(this, () => this.scene.start('OptionsScene')) },
+      { label: t('Salir'), action: () => Transition.go(this, () => this.scene.start('StartScene')) }
     ];
     this.selected = 0;
     this.items = [];
@@ -238,7 +239,7 @@ class MenuScene extends Phaser.Scene {
 
   createFooter() {
     this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT - 40, 'Flechas / WASD para elegir   ·   Enter para confirmar', {
+      .text(GAME_WIDTH / 2, GAME_HEIGHT - 40, t('Flechas / WASD para elegir   ·   Enter para confirmar'), {
         fontFamily: FONT_FAMILY,
         fontSize: '16px',
         color: COLORS.textDim

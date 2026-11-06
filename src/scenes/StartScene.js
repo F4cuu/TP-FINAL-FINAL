@@ -20,7 +20,7 @@ class StartScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.add
-      .text(cx, cy + 10, 'Bacteria Survivor', {
+      .text(cx, cy + 10, t('Bacteria Survivor'), {
         fontFamily: FONT_FAMILY,
         fontSize: '32px',
         color: COLORS.text
@@ -28,7 +28,7 @@ class StartScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     const prompt = this.add
-      .text(cx, cy + 120, 'Presiona cualquier tecla', {
+      .text(cx, cy + 120, t('Presiona cualquier tecla'), {
         fontFamily: FONT_FAMILY,
         fontSize: '22px',
         color: COLORS.textDim

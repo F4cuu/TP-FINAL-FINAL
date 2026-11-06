@@ -26,7 +26,7 @@ class IntroScene extends Phaser.Scene {
       .setAlpha(0);
 
     this.hint = this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT - 70, 'Presiona cualquier tecla para continuar', {
+      .text(GAME_WIDTH / 2, GAME_HEIGHT - 70, t('Presiona cualquier tecla para continuar'), {
         fontFamily: FONT_FAMILY,
         fontSize: '18px',
         color: COLORS.textDim
@@ -50,7 +50,7 @@ class IntroScene extends Phaser.Scene {
       Transition.go(this, () => this.scene.start('MenuScene'));
       return;
     }
-    this.text.setText(this.panels[this.index]).setAlpha(0);
+    this.text.setText(t(this.panels[this.index])).setAlpha(0);
     this.hint.setAlpha(0);
     this.tweens.add({ targets: this.text, alpha: 1, duration: 400 });
     this.tweens.add({ targets: this.hint, alpha: 1, duration: 400, delay: 500 });

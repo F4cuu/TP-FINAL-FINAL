@@ -602,7 +602,7 @@ class GameScene extends Phaser.Scene {
 
     if (isBossWave(wave)) {
       this.queueSpawn('boss');
-      this.showNotice('¡' + bossNameForWave(ENEMY_DEFS.boss, wave) + ' se acerca!');
+      this.showNotice(t('¡{name} se acerca!', { name: bossNameForWave(ENEMY_DEFS.boss, wave) }));
       this.audio.boss();
       this.cameras.main.shake(400, 0.01);
     }
@@ -637,8 +637,8 @@ class GameScene extends Phaser.Scene {
     this.endMapView();
     this.audio.waveEnd();
     this.shake('bossDown', true);
-    this.spawnBannerText(enemy.x, enemy.y - 90, '¡' + enemy.name.toUpperCase() + ' DERROTADO!');
-    this.showNotice(enemy.name + ' derrotado: sobreviví hasta que termine el tiempo para tu recompensa');
+    this.spawnBannerText(enemy.x, enemy.y - 90, t('¡{name} DERROTADO!', { name: enemy.name.toUpperCase() }));
+    this.showNotice(t('{name} derrotado: sobreviví hasta que termine el tiempo para tu recompensa', { name: enemy.name }));
   }
 
   nextWave() {
@@ -651,8 +651,8 @@ class GameScene extends Phaser.Scene {
     this.playShopMusic();
     this.bossRewardOptions = this.buildShopOptions();
     this.buildOverlay(
-      (this.defeatedBossName || 'JEFE').toUpperCase() + ' DERROTADO',
-      'Elegí una recompensa gratis (1 / 2 / 3)'
+      t('{name} DERROTADO', { name: (this.defeatedBossName || t('JEFE')).toUpperCase() }),
+      t('Elegí una recompensa gratis (1 / 2 / 3)')
     );
     this.raiseCoinHud();
     this.buildBossRewardCards();
@@ -697,7 +697,7 @@ class GameScene extends Phaser.Scene {
         .setDepth(DEPTH.overlay + 2);
 
       const cost = this.add
-        .text(x, y + 80, 'Gratis', {
+        .text(x, y + 80, t('Gratis'), {
           fontFamily: FONT_FAMILY,
           fontSize: '22px',
           color: '#9be15d'
@@ -915,11 +915,11 @@ class GameScene extends Phaser.Scene {
   showVictory() {
     this.phase = 'victory';
     this.victoryButtons = [
-      { label: 'Terminar', action: () => this.finishVictory() },
-      { label: 'Modo infinito', action: () => this.enterInfinite() }
+      { label: t('Terminar'), action: () => this.finishVictory() },
+      { label: t('Modo infinito'), action: () => this.enterInfinite() }
     ];
     this.victoryIndex = 0;
-    this.buildOverlay('VICTORIA', 'Sobreviviste las 9 oleadas');
+    this.buildOverlay(t('VICTORIA'), t('Sobreviviste las 9 oleadas'));
     this.renderOverlayButtons(this.victoryButtons);
   }
 
@@ -956,8 +956,8 @@ class GameScene extends Phaser.Scene {
     this.shopIndex = 0;
     this.shopOptions = this.buildShopOptions();
     this.buildOverlay(
-      'TIENDA',
-      'Elegí una mejora (precios x' + shopPriceMultiplier(this.wave).toFixed(1) + ')'
+      t('TIENDA'),
+      t('Elegí una mejora (precios x{mult})', { mult: shopPriceMultiplier(this.wave).toFixed(1) })
     );
     this.raiseCoinHud();
     this.buildCards();
@@ -987,8 +987,8 @@ class GameScene extends Phaser.Scene {
     UPGRADE_DEFS.forEach((up) => {
       pool.push({
         kind: 'upgrade',
-        name: up.name,
-        desc: up.desc,
+        name: t(up.name),
+        desc: t(up.desc),
         cost: shopPrice(up.baseCost, this.wave),
         apply: up.apply,
         sold: false
@@ -1004,8 +1004,8 @@ class GameScene extends Phaser.Scene {
       pool.push({
         kind: 'weapon',
         weaponKey: key,
-        name: def.name,
-        desc: owned ? 'Acoplar (subir nivel)' : 'Nueva arma',
+        name: t(def.name),
+        desc: owned ? t('Acoplar (subir nivel)') : t('Nueva arma'),
         cost: shopPrice(WEAPON_BASE_COST, this.wave),
         owned: owned,
         sold: false
@@ -1066,7 +1066,7 @@ class GameScene extends Phaser.Scene {
         .setDepth(DEPTH.overlay + 2);
 
       const cost = this.add
-        .text(x, y + 80, opt.cost + ' monedas', {
+        .text(x, y + 80, t('{n} monedas', { n: opt.cost }), {
           fontFamily: FONT_FAMILY,
           fontSize: '20px',
           color: '#9be15d'
@@ -1095,7 +1095,7 @@ class GameScene extends Phaser.Scene {
       .on('pointerdown', () => this.rerollShop());
 
     this.continueBtn = this.add
-      .text(840, 490, '[ Enter ] Continuar', {
+      .text(840, 490, t('[ Enter ] Continuar'), {
         fontFamily: FONT_FAMILY,
         fontSize: '22px',
         color: '#9be15d'
@@ -1107,7 +1107,7 @@ class GameScene extends Phaser.Scene {
       .on('pointerdown', () => this.closeShop());
 
     this.shopHint = this.add
-      .text(GAME_WIDTH / 2, 688, '1 / 2 / 3 comprar     R reroll     Enter continuar', {
+      .text(GAME_WIDTH / 2, 688, t('1 / 2 / 3 comprar     R reroll     Enter continuar'), {
         fontFamily: FONT_FAMILY,
         fontSize: '16px',
         color: COLORS.textDim
@@ -1123,7 +1123,7 @@ class GameScene extends Phaser.Scene {
     this.destroySellSection();
 
     this.sellTitle = this.add
-      .text(24, 575, 'Vender armas (clic):', {
+      .text(24, 575, t('Vender armas (clic):'), {
         fontFamily: FONT_FAMILY,
         fontSize: '18px',
         color: COLORS.text
@@ -1137,7 +1137,7 @@ class GameScene extends Phaser.Scene {
     if (this.player.weapons.length <= 1) {
       this.sellChips.push(
         this.add
-          .text(230, 575, '(no podes vender tu unica arma)', {
+          .text(230, 575, t('(no podes vender tu unica arma)'), {
             fontFamily: FONT_FAMILY,
             fontSize: '16px',
             color: COLORS.textDim
@@ -1155,7 +1155,7 @@ class GameScene extends Phaser.Scene {
         .text(
           chipX,
           615,
-          w.def.name + ' Nv.' + w.level + '  (+' + SELL_WEAPON_VALUE + ')',
+          t(w.def.name) + ' ' + t('Nv.') + w.level + '  (+' + SELL_WEAPON_VALUE + ')',
           {
             fontFamily: FONT_FAMILY,
             fontSize: '16px',
@@ -1194,7 +1194,7 @@ class GameScene extends Phaser.Scene {
 
   refreshShop() {
     const rerollCost = this.getRerollCost();
-    this.coinText.setText('Monedas: ' + this.coins);
+    this.coinText.setText(t('Monedas:') + ' ' + this.coins);
     if (this.rerollBtn) {
       this.rerollBtn.setText('[ R ] Reroll (' + rerollCost + ')');
       this.rerollBtn.setColor(this.coins >= rerollCost ? '#9be15d' : '#eb3b5a');
@@ -1212,9 +1212,9 @@ class GameScene extends Phaser.Scene {
       c.card.setStrokeStyle(3, opt.sold ? 0x555f7a : selected ? 0x9be15d : 0x3a5bd0, 1);
       c.card.setFillStyle(opt.sold ? 0x161d33 : 0x1d2a54, 0.95);
       c.title.setColor(opt.sold ? '#6b7690' : '#e8f0ff');
-      c.desc.setText(opt.sold ? 'Comprado' : opt.desc);
+      c.desc.setText(opt.sold ? t('Comprado') : opt.desc);
       c.desc.setColor(opt.sold ? '#6b7690' : COLORS.textDim);
-      c.cost.setText(opt.sold ? '--' : opt.cost + ' monedas');
+      c.cost.setText(opt.sold ? '--' : t('{n} monedas', { n: opt.cost }));
       c.cost.setColor(opt.sold ? '#6b7690' : affordable ? '#9be15d' : '#eb3b5a');
     });
   }
@@ -1298,7 +1298,7 @@ class GameScene extends Phaser.Scene {
   showWeaponChoice(opt, index) {
     this.weaponChoice = opt;
     this.weaponChoiceIndex = index;
-    const choices = ['Equipar en espacio libre', 'Acoplar (subir nivel)'];
+    const choices = [t('Equipar en espacio libre'), t('Acoplar (subir nivel)')];
     this.choiceButtons = [];
 
     choices.forEach((label, i) => {
@@ -1812,13 +1812,13 @@ class GameScene extends Phaser.Scene {
     this.hpBarFill.setFillStyle(ratio > 0.5 ? 0x39d353 : ratio > 0.25 ? 0xf7b731 : 0xeb3b5a);
     this.hpText.setText(Math.ceil(this.player.hp) + ' / ' + this.player.maxHp);
 
-    const waveLabel = this.wave > TOTAL_WAVES ? 'Oleada ' + this.wave + ' (infinita)' : 'Oleada ' + this.wave + ' / ' + TOTAL_WAVES;
+    const waveLabel = this.wave > TOTAL_WAVES ? t('Oleada') + ' ' + this.wave + ' ' + t('(infinita)') : t('Oleada') + ' ' + this.wave + ' / ' + TOTAL_WAVES;
     this.waveText.setText(waveLabel);
     this.timerText.setText(Math.max(0, Math.ceil(this.waveTimeLeft)) + 's');
-    this.coinText.setText('Monedas: ' + this.coins);
+    this.coinText.setText(t('Monedas:') + ' ' + this.coins);
 
     const weaponNames = this.player.weapons.map(function (w) {
-      return w.def.name + ' Nv.' + w.level;
+      return t(w.def.name) + ' ' + t('Nv.') + w.level;
     });
     this.weaponText.setText(weaponNames.join('   '));
 
