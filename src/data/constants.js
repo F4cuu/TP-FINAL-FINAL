@@ -12,8 +12,8 @@ const HUD_OFFSET_Y = (RENDER_HEIGHT - GAME_HEIGHT) / 2;
 
 const FONT_FAMILY = "'Lilita One', Arial, sans-serif";
 
-const ARENA_WIDTH = 3200;
-const ARENA_HEIGHT = 2400;
+const ARENA_WIDTH = 1600;
+const ARENA_HEIGHT = 1200;
 
 const TOTAL_WAVES = 9;
 

@@ -244,6 +244,14 @@
 - **Decisión sobre lenguaje/estructura:** JavaScript puro + Phaser por CDN (sin bundler); datos de balance separados de la lógica.
 - **Verificación:** sintaxis de los 22 archivos JS validada con `node --check`; prueba smoke en Chrome headless (`--dump-dom`) recorriendo Boot, GameScene, tienda, victoria, modo infinito, game over, menú, opciones, intro y pausa → 0 errores.
 
+### Manos y armas sostenidas, mapa más chico — duodécima tanda
+
+- Pablito tiene manos verdes (pixel art, contorno negro) que sostienen cada arma comprada, orbitando alrededor suyo como en Brotato (referencia, no calco). Apuntan al enemigo más cercano en rango; las armas con `hands: 2` usan dos manos.
+- `src/entities/PlayerHands.js` (nuevo): `sync()` crea un holder por arma, `muzzleFor(weapon)` da la boca del arma, `kick()` aplica retroceso, `fadeOut()` en la muerte. Los proyectiles salen de la boca del arma (`Weapon.origin`).
+- Diseños pixel art (texturas `weapon_<key>` y `hand` en `Textures.js`, 1 px de arte = 2x2): toxin = pistola de baba con tanque, exotoxin = abanico plegable, biofilm = megáfono con ondas, spores = hongo lanzador, plasmid = subfusil con tambor en anillo, torpedo pedorro = lanzamisiles con un trasero en la punta.
+- Mapa achicado al 50% por lado: `ARENA_WIDTH/HEIGHT` 3200x2400 → 1600x1200 (`MAP_VIEW_ZOOM` pasa a 0.9).
+- Sin probar en navegador real; solo `node --check` y smoke test con Phaser simulado.
+
 ## 6. Convenciones técnicas y de trabajo
 
 - Responder en español.

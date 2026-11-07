@@ -57,6 +57,8 @@ class GameScene extends Phaser.Scene {
 
     this.player = new Player(this, ARENA_WIDTH / 2, ARENA_HEIGHT / 2);
     this.player.weapons.push(new Weapon(WEAPON_DEFS.toxin));
+    this.hands = new PlayerHands(this, this.player);
+    this.hands.sync();
 
     this.cameras.main.startFollow(this.player.sprite, false, 0.1, 0.1);
 
@@ -117,6 +119,7 @@ class GameScene extends Phaser.Scene {
     this.totalTime += dt;
 
     this.player.update(dt, this.readInput());
+    this.hands.update(dt, this);
 
     for (let i = 0; i < this.player.weapons.length; i++) {
       this.player.weapons[i].update(dt, this.player, this);
@@ -812,6 +815,7 @@ class GameScene extends Phaser.Scene {
     this.deathStartZoom = camera.zoom;
     this.deathDir = this.player.sprite.flipX ? -1 : 1;
     this.player.sprite.setTint(0xff5555);
+    this.hands.fadeOut(DEATH.duration * 400);
     this.shake('hurt', true);
     this.spawnDeathBurst(this.player.x, this.player.y);
   }
