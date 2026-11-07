@@ -3,6 +3,9 @@
 // son imágenes sueltas que se mueven MUY despacio (deriva, giro lento, pulso suave), pensado como
 // un detalle que se nota cuando uno está tranquilo y no como distracción. Colores de poco contraste
 // y azar determinista (misma decoración en cada partida).
+// Intensidad general de los detalles (1 = original, menos = más sutil).
+const DECOR_STRENGTH = { base: 0.5, items: 0.45 };
+
 const ArenaDecor = {
   rng(seed) {
     let a = seed >>> 0;
@@ -94,14 +97,36 @@ const ArenaDecor = {
       return a + (b - a) * rand();
     };
     const margin = 40;
-    const px = function () { return between(margin, W - margin); };
-    const py = function () { return between(margin, H - margin); };
+    // Reparto parejo: por cada punto se prueban varios candidatos y se elige el más alejado de los
+    // ya colocados (así no quedan grupos amontonados ni zonas vacías).
+    const placeIn = function (list) {
+      let best = null;
+      let bestD = -1;
+      for (let c = 0; c < 40; c++) {
+        const x = between(margin, W - margin);
+        const y = between(margin, H - margin);
+        let d = Infinity;
+        for (let i = 0; i < list.length; i++) {
+          const dd = Math.hypot(list[i].x - x, list[i].y - y);
+          if (dd < d) d = dd;
+        }
+        if (d > bestD) {
+          bestD = d;
+          best = { x: x, y: y };
+        }
+      }
+      list.push(best);
+      return best;
+    };
+    const agarPts = [];
+    const itemPts = [];
 
     // ---- Capa fija: agar y motas ----
-    const base = scene.add.graphics().setDepth(DEPTH.arena + 0.4);
+    const base = scene.add.graphics().setDepth(DEPTH.arena + 0.4).setAlpha(DECOR_STRENGTH.base);
     for (let i = 0; i < 16; i++) {
-      const x = px();
-      const y = py();
+      const pt = placeIn(agarPts);
+      const x = pt.x;
+      const y = pt.y;
       const r = between(90, 230);
       base.fillStyle(0x1d2c62, 0.28);
       base.fillCircle(x, y, r);
@@ -110,9 +135,14 @@ const ArenaDecor = {
       base.fillStyle(0x2b428f, 0.1);
       base.fillCircle(x + r * 0.14, y - r * 0.12, r * 0.38);
     }
-    for (let i = 0; i < 320; i++) {
-      base.fillStyle(0x4c6fd6, between(0.12, 0.32));
-      base.fillCircle(between(8, W - 8), between(8, H - 8), between(1, 2.8));
+    // Motas en cuadrícula con desvío al azar: cubren todo el mapa de forma pareja.
+    const cols = 20;
+    const rows = 15;
+    for (let gy = 0; gy < rows; gy++) {
+      for (let gx = 0; gx < cols; gx++) {
+        base.fillStyle(0x4c6fd6, between(0.12, 0.32));
+        base.fillCircle((gx + rand()) * (W / cols), (gy + rand()) * (H / rows), between(1, 2.8));
+      }
     }
 
     // ---- Elementos móviles ----
@@ -120,7 +150,8 @@ const ArenaDecor = {
     const add = function (key, n, cfg) {
       for (let i = 0; i < n; i++) {
         const variant = Math.floor(rand() * cfg.variants);
-        const img = scene.add.image(px(), py(), key + variant).setDepth(DEPTH.arena + 0.5);
+        const pt = placeIn(itemPts);
+        const img = scene.add.image(pt.x, pt.y, key + variant).setDepth(DEPTH.arena + 0.5).setAlpha(DECOR_STRENGTH.items);
         const baseScale = cfg.scale ? between(cfg.scale[0], cfg.scale[1]) : 1;
         img.setScale(baseScale).setRotation(rand() * Math.PI * 2);
         const heading = cfg.rise ? -Math.PI / 2 : rand() * Math.PI * 2;
