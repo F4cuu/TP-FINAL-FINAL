@@ -71,8 +71,6 @@ function createTextures(scene) {
   g.clear();
   g.fillStyle(COLORS.arena, 1);
   g.fillRect(0, 0, 64, 64);
-  g.lineStyle(1, COLORS.grid, 0.5);
-  g.strokeRect(0.5, 0.5, 64, 64);
   g.generateTexture('tile', 64, 64);
 
   g.destroy();
