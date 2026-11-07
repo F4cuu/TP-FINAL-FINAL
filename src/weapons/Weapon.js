@@ -33,6 +33,17 @@ class Weapon {
     }
   }
 
+  // De dónde salen los disparos: la boca del arma que sostiene Pablito.
+  origin(player, game) {
+    return game.hands ? game.hands.muzzleFor(this) : { x: player.x, y: player.y };
+  }
+
+  kick(game) {
+    if (game.hands) {
+      game.hands.kick(this);
+    }
+  }
+
   tryFire(player, game) {
     const damage = this.damage * player.damageMul;
     const type = this.def.type;
@@ -51,6 +62,7 @@ class Weapon {
         this.def.color,
         this.def.key
       );
+      this.kick(game);
       game.audio.shoot();
       return;
     }
@@ -70,6 +82,7 @@ class Weapon {
         this.def.color,
         this.def.key
       );
+      this.kick(game);
       game.audio.shoot();
       return;
     }
@@ -100,10 +113,11 @@ class Weapon {
   }
 
   fireTorpedo(target, damage, player, game) {
-    const angle = Math.atan2(target.y - player.y, target.x - player.x);
+    const from = this.origin(player, game);
+    const angle = Math.atan2(target.y - from.y, target.x - from.x);
     const vx = Math.cos(angle) * this.def.projectileSpeed;
     const vy = Math.sin(angle) * this.def.projectileSpeed;
-    game.spawnProjectile(player.x, player.y, vx, vy, {
+    game.spawnProjectile(from.x, from.y, vx, vy, {
       damage: damage,
       radius: this.def.radius * player.areaMul,
       pierce: 0,
@@ -116,12 +130,14 @@ class Weapon {
       reservedDamage: damage,
       weaponKey: this.def.key
     });
+    this.kick(game);
     game.audio.shoot();
   }
 
   fireSpread(target, damage, player, game) {
     const count = this.def.count;
-    const baseAngle = Math.atan2(target.y - player.y, target.x - player.x);
+    const from = this.origin(player, game);
+    const baseAngle = Math.atan2(target.y - from.y, target.x - from.x);
     const spread = this.def.spread;
     const radius = this.def.radius * player.areaMul;
 
@@ -132,7 +148,7 @@ class Weapon {
       }
       const vx = Math.cos(angle) * this.def.projectileSpeed;
       const vy = Math.sin(angle) * this.def.projectileSpeed;
-      game.spawnProjectile(player.x, player.y, vx, vy, {
+      game.spawnProjectile(from.x, from.y, vx, vy, {
         damage: damage,
         radius: radius,
         pierce: this.pierce,
@@ -142,6 +158,7 @@ class Weapon {
         weaponKey: this.def.key
       });
     }
+    this.kick(game);
     game.audio.shoot();
   }
 
@@ -152,10 +169,11 @@ class Weapon {
       this.burstLeft = 0;
       return;
     }
-    const angle = Math.atan2(target.y - player.y, target.x - player.x);
+    const from = this.origin(player, game);
+    const angle = Math.atan2(target.y - from.y, target.x - from.x);
     const vx = Math.cos(angle) * this.def.projectileSpeed;
     const vy = Math.sin(angle) * this.def.projectileSpeed;
-    game.spawnProjectile(player.x, player.y, vx, vy, {
+    game.spawnProjectile(from.x, from.y, vx, vy, {
       damage: damage,
       radius: this.def.radius * player.areaMul,
       pierce: this.pierce,
@@ -164,6 +182,7 @@ class Weapon {
       reservedDamage: damage,
       weaponKey: this.def.key
     });
+    this.kick(game);
     game.audio.shoot();
   }
 }

@@ -1,6 +1,7 @@
 const WEAPON_DEFS = {
   toxin: {
     key: 'toxin',
+    hands: 1,
     name: 'Escupida de toxina',
     type: 'projectile',
     damage: 10,
@@ -15,6 +16,7 @@ const WEAPON_DEFS = {
   },
   exotoxin: {
     key: 'exotoxin',
+    hands: 2,
     name: 'Abanico de exotoxina',
     type: 'projectile',
     damage: 5,
@@ -29,6 +31,7 @@ const WEAPON_DEFS = {
   },
   biofilm: {
     key: 'biofilm',
+    hands: 1,
     name: 'Onda de biofilm',
     type: 'aoe',
     damage: 15,
@@ -39,6 +42,7 @@ const WEAPON_DEFS = {
   },
   spores: {
     key: 'spores',
+    hands: 2,
     name: 'Liberacion de esporas',
     type: 'aoe_target',
     damage: 25,
@@ -49,6 +53,7 @@ const WEAPON_DEFS = {
   },
   plasmid: {
     key: 'plasmid',
+    hands: 2,
     name: 'Plasmido veloz',
     type: 'burst',
     damage: 8,
@@ -64,6 +69,7 @@ const WEAPON_DEFS = {
   },
   torpedo: {
     key: 'torpedo',
+    hands: 2,
     name: 'Torpedo pedorro',
     type: 'explosive',
     damage: 45,
