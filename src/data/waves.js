@@ -16,8 +16,15 @@ function isBossWave(wave) {
   return BOSS_WAVES.indexOf(wave) !== -1;
 }
 
+// Duración base de la oleada en segundos. En las rondas de jefe, si el jefe sigue vivo al terminar
+// el tiempo, la oleada se prolonga hasta que muera.
+const WAVE_DURATION_OVERRIDES = { 3: 40 };
+
 function waveDuration(wave) {
-  return 20 + 4 * (wave - 1);
+  if (WAVE_DURATION_OVERRIDES[wave]) {
+    return WAVE_DURATION_OVERRIDES[wave];
+  }
+  return Math.min(20 + 4 * (wave - 1), 50);
 }
 
 function waveEnemyCount(wave) {

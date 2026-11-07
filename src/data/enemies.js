@@ -82,8 +82,8 @@ const BOSS_POWERS = {
     cooldown: 10,
     windTime: 1.2,
     speed: 1100,
-    bounces: 2,
-    maxTime: 6,
+    bounces: 5,
+    maxTime: 9,
     tint: 0xff6b6b
   },
   // Clororín Bravo: anillo de limpieza que se expande desde él; tiene huecos seguros por los que se puede pasar.
