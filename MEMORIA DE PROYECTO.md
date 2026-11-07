@@ -265,6 +265,12 @@
 - Captura de referencia generada fuera del juego (no se vio en navegador real).
 - Movimiento lento: células, bacilos y burbujas son imágenes con texturas reutilizables (`decor_cluster_/rod_/bubble_`) que derivan a 1.5–9 px/s, giran apenas, las células pulsan ±3% y las burbujas suben con vaivén; reaparecen por el lado opuesto. `GameScene.decor.update(dt)` se llama solo mientras `phase === 'playing'`. Agar, motas y viñeta quedan estáticos.
 
+### GDD actualizado — decimoquinta tanda
+
+- `GDD PROPUESTA.md` pasó a la versión 2.1 (7 de noviembre de 2026): arena 1600x1200, resolución 1920x1080 con interfaz en 1280x720, jefes con nombre y poderes (embestida con 5 rebotes, blanqueamiento, lluvia), vida de jefes 1238/2475/4125 y velocidad 190, ronda de jefe prolongable (oleada 3 = 40 s), manos y armas, fondo decorado, música, idioma, transiciones y cámara lenta al morir, valores de enemigos actuales. Se agregó en el Anexo B la tabla «Cambios de la versión 2.1».
+- `GDD PROPUESTA - FINAL.docx` y `.pdf` se regeneraron desde el .md conservando los estilos del .docx anterior (portada, encabezado/pie «GDD v2.1», tablas azules). El texto del .docx anterior tenía algunas diferencias de redacción con el .md (p. ej. «un vampire survivors» en el concepto); ahora ambos coinciden con el .md. Los GDD antiguos (`GDD PROPUESTA.docx/.pdf`, `(reparado).docx`) no se tocaron.
+- El Anexo B conserva la tabla histórica de la versión 1 → 2.0, que menciona valores viejos a propósito.
+
 ## 6. Convenciones técnicas y de trabajo
 
 - Responder en español.
