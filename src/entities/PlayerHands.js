@@ -45,11 +45,6 @@ class PlayerHands {
     gun.setOrigin(WEAPON_GRIP_X / WEAPON_TEX_W, 0.5).setScale(HANDS.weaponScale);
     const backHand = scene.add.image(0, 0, 'hand').setScale(0.75);
     const parts = [gun, backHand];
-    let frontHand = null;
-    if (weapon.def.hands > 1) {
-      frontHand = scene.add.image(0, 0, 'hand').setScale(0.75);
-      parts.push(frontHand);
-    }
     return {
       weapon: weapon,
       slot: slot,
@@ -57,7 +52,6 @@ class PlayerHands {
       recoil: 0,
       gun: gun,
       backHand: backHand,
-      frontHand: frontHand,
       parts: parts
     };
   }
@@ -138,10 +132,6 @@ class PlayerHands {
 
       h.gun.setPosition(gx, gy).setRotation(h.aim).setFlipY(facingLeft).setDepth(depth);
       h.backHand.setPosition(gx, gy).setDepth(depth + 0.1);
-      if (h.frontHand) {
-        const fore = (WEAPON_MUZZLE_X - WEAPON_GRIP_X) * HANDS.weaponScale * 0.5;
-        h.frontHand.setPosition(gx + dirX * fore, gy + dirY * fore).setDepth(depth + 0.1);
-      }
     });
   }
 

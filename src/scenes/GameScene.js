@@ -43,6 +43,7 @@ class GameScene extends Phaser.Scene {
       .tileSprite(0, 0, ARENA_WIDTH, ARENA_HEIGHT, 'tile')
       .setOrigin(0)
       .setDepth(DEPTH.arena);
+    this.decor = ArenaDecor.draw(this);
     this.add
       .rectangle(
         ARENA_WIDTH / 2,
@@ -117,6 +118,7 @@ class GameScene extends Phaser.Scene {
     }
 
     this.totalTime += dt;
+    this.decor.update(dt);
 
     this.player.update(dt, this.readInput());
     this.hands.update(dt, this);
@@ -284,7 +286,7 @@ class GameScene extends Phaser.Scene {
     if (this.phase !== 'playing') {
       return;
     }
-    this.waveTimeLeft -= dt;
+    this.waveTimeLeft = Math.max(0, this.waveTimeLeft - dt);
 
     if (this.spawnQueue.length === 0) {
       this.spawnQueue = buildSpawnQueue(this.wave);
@@ -297,9 +299,17 @@ class GameScene extends Phaser.Scene {
       this.queueSpawn(type);
     }
 
-    if (this.waveTimeLeft <= 0) {
+    // Ronda de jefe: si el tiempo se acabó pero el jefe sigue vivo (o por aparecer), la oleada se prolonga.
+    if (this.waveTimeLeft <= 0 && !this.bossPending()) {
       this.endWave();
     }
+  }
+
+  bossPending() {
+    if (!isBossWave(this.wave) || this.bossDefeatedThisWave) {
+      return false;
+    }
+    return true;
   }
 
   // ---- Poderes de los jefes ----
@@ -598,7 +608,7 @@ class GameScene extends Phaser.Scene {
     this.resetArenaForWave();
     this.bossDefeatedThisWave = false;
     this.wave = wave;
-    this.waveTimeLeft = Math.min(20 + 4 * (wave - 1), 50);
+    this.waveTimeLeft = waveDuration(wave);
     this.spawnQueue = buildSpawnQueue(wave);
     this.spawnInterval = waveSpawnInterval(wave);
     this.spawnTimer = 0.2;
@@ -641,7 +651,9 @@ class GameScene extends Phaser.Scene {
     this.audio.waveEnd();
     this.shake('bossDown', true);
     this.spawnBannerText(enemy.x, enemy.y - 90, t('¡{name} DERROTADO!', { name: enemy.name.toUpperCase() }));
-    this.showNotice(t('{name} derrotado: sobreviví hasta que termine el tiempo para tu recompensa', { name: enemy.name }));
+    if (this.waveTimeLeft > 0) {
+      this.showNotice(t('{name} derrotado: sobreviví hasta que termine el tiempo para tu recompensa', { name: enemy.name }));
+    }
   }
 
   nextWave() {
@@ -1818,7 +1830,7 @@ class GameScene extends Phaser.Scene {
 
     const waveLabel = this.wave > TOTAL_WAVES ? t('Oleada') + ' ' + this.wave + ' ' + t('(infinita)') : t('Oleada') + ' ' + this.wave + ' / ' + TOTAL_WAVES;
     this.waveText.setText(waveLabel);
-    this.timerText.setText(Math.max(0, Math.ceil(this.waveTimeLeft)) + 's');
+    this.timerText.setText(this.waveTimeLeft <= 0 && this.bossPending() ? '∞' : Math.ceil(this.waveTimeLeft) + 's');
     this.coinText.setText(t('Monedas:') + ' ' + this.coins);
 
     const weaponNames = this.player.weapons.map(function (w) {

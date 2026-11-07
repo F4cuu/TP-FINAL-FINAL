@@ -252,6 +252,19 @@
 - Mapa achicado al 50% por lado: `ARENA_WIDTH/HEIGHT` 3200x2400 → 1600x1200 (`MAP_VIEW_ZOOM` pasa a 0.9).
 - Sin probar en navegador real; solo `node --check` y smoke test con Phaser simulado.
 
+### Rondas de jefe, una mano por arma — decimotercera tanda
+
+- Rondas de jefe: si el tiempo se acaba y el jefe sigue vivo, la oleada se prolonga (el reloj muestra ∞) hasta que muera; si muere antes, la ronda sigue hasta que termine el tiempo y después viene la recompensa (`bossPending()` en `GameScene`).
+- Ronda 3 (Jabonoso Alvo) dura 40 s (`WAVE_DURATION_OVERRIDES` en `waves.js`; `startWave` usa `waveDuration`).
+- Embestida: 5 rebotes (antes 2), `maxTime` 9 s.
+- Todas las armas se sostienen con una sola mano: se eliminó el campo `hands` y la segunda mano de `PlayerHands`.
+
+### Fondo del mapa decorado — decimocuarta tanda
+
+- `src/systems/ArenaDecor.js` (nuevo): dibuja una vez, en un `Graphics` estático (depth arena + 0.5), una "muestra de microscopio": manchas de agar, cúmulos de células, bacilos, burbujas, motas y una viñeta oscura hacia el borde. Colores de bajo contraste y azar determinista (semilla fija). Se llama desde `GameScene.create` justo después del `tileSprite`.
+- Captura de referencia generada fuera del juego (no se vio en navegador real).
+- Movimiento lento: células, bacilos y burbujas son imágenes con texturas reutilizables (`decor_cluster_/rod_/bubble_`) que derivan a 1.5–9 px/s, giran apenas, las células pulsan ±3% y las burbujas suben con vaivén; reaparecen por el lado opuesto. `GameScene.decor.update(dt)` se llama solo mientras `phase === 'playing'`. Agar, motas y viñeta quedan estáticos.
+
 ## 6. Convenciones técnicas y de trabajo
 
 - Responder en español.
